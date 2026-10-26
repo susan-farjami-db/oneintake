@@ -1,0 +1,11 @@
+# generated 2026-10-26T18:29:02+00:00
+tables_without_comment=0 PASS
+columns_without_comment=0 PASS
+email_columns_without_pii_tag=0 PASS
+filtered_tables_missing_tags=0 PASS
+filtered_tables_missing_row_filter=0 PASS
+task_force member sees all gold rows: 360/360 PASS
+non-member mapped to Finance sees silver.requests: rows=24 units=1 unit=Finance PASS
+non-member mapped to Finance sees gold.projects: rows=28 units=1 unit=Finance PASS
+quarantine rows (unfiltered, context)=4
+OVERALL PASS

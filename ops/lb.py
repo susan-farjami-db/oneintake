@@ -26,11 +26,15 @@ def connect(w: WorkspaceClient, **kw) -> psycopg.Connection:
 
 
 def split_sql(text: str) -> list[str]:
-    stmts, buf = [], []
+    stmts, buf, block = [], [], False
     for line in text.splitlines():
         if line.strip().startswith("--"):
             continue
         buf.append(line)
+        block = block or line.strip().upper() == "BEGIN"
+        if block and line.strip().upper() != "END;":
+            continue
+        block = False
         if line.rstrip().endswith(";"):
             stmts.append("\n".join(buf).strip().rstrip(";"))
             buf = []
