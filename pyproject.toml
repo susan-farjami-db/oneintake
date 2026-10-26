@@ -13,6 +13,9 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "faker>=40.43.0",
+    "httpx>=0.28.1",
+    "pytest>=9.1.1",
     "ty>=0.0.12",
 ]
 
@@ -47,6 +50,9 @@ path = "src/oneintake/_version.py"
 template = '''
 version = "{version}"
 '''
+
+[tool.hatch.build.targets.wheel.force-include]
+"config" = "oneintake/config"
 
 [tool.hatch.build]
 artifacts = ["src/oneintake/__dist__", "src/oneintake/_metadata.py"]

@@ -1,0 +1,16 @@
+[
+  {"field_name": "title", "label": "Request title", "type": "text", "required": true, "options": null, "display_order": 1},
+  {"field_name": "description", "label": "Describe the idea", "type": "textarea", "required": true, "options": null, "display_order": 2},
+  {"field_name": "business_unit", "label": "Business unit", "type": "select", "required": true,
+   "options": ["Agent Operations", "Brokerage", "Safety and Compliance", "Finance", "Capacity and Carrier Relations", "Customer Solutions", "Technology", "Claims and Insurance", "Human Resources", "Marketing"],
+   "display_order": 3},
+  {"field_name": "requester_email", "label": "Requester email", "type": "email", "required": true, "options": null, "display_order": 4},
+  {"field_name": "sponsor", "label": "Executive sponsor", "type": "text", "required": true, "options": null, "display_order": 5},
+  {"field_name": "problem_statement", "label": "Problem statement", "type": "textarea", "required": true, "options": null, "display_order": 6},
+  {"field_name": "expected_benefit", "label": "Expected benefit", "type": "textarea", "required": true, "options": null, "display_order": 7},
+  {"field_name": "est_value_usd", "label": "Estimated annual value (USD)", "type": "number", "required": true, "options": null, "display_order": 8},
+  {"field_name": "data_sources", "label": "Data sources", "type": "multiselect", "required": false,
+   "options": ["TMS", "ERP", "CRM", "Load Board", "ELD Telematics", "Data Warehouse", "Document Management", "Agent Portal", "Claims System", "Payroll System", "Fuel Card Platform", "Email"],
+   "display_order": 9},
+  {"field_name": "urgency", "label": "Urgency", "type": "select", "required": true, "options": ["low", "medium", "high"], "display_order": 10}
+]

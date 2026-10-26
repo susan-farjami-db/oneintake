@@ -38,3 +38,8 @@ node_modules/
 
 # UI dist folder
 src/oneintake/__dist__/
+# generated synthetic data (reproducible from seed)
+data/raw/
+.pytest_cache/
+test-results/
+playwright-report/

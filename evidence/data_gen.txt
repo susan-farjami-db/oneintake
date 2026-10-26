@@ -1,0 +1,7 @@
+seed=20261026
+requests=300
+projects=60
+planted_pairs=18
+ambiguous=10
+labeled_categories=50
+duplicate_pairs=40
