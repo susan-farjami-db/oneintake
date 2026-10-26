@@ -1,32 +1,64 @@
 bundle:
-  name: "oneintake"
+  name: oneintake
 
-sync:
-  include:
-    - .build
-
-artifacts:
-  default:
-    build: apx build
+variables:
+  catalog:
+    description: Unity Catalog catalog that holds the raw, silver, gold, and ops schemas
+  warehouse_id:
+    description: SQL warehouse for ai_classify calls, setup SQL, and Genie
+    lookup:
+      warehouse: "Serverless Starter Warehouse"
+  lakebase_project:
+    description: Lakebase Autoscaling project id
+    default: oneintake
+  lakebase_branch:
+    default: production
+  lakebase_database_id:
+    description: Database resource id of databricks_postgres on the branch
+    default: databricks-postgres
+  embedding_endpoint:
+    description: Foundation Model API embedding endpoint (discovered by ops/run.py discover)
+    default: databricks-bge-large-en
+  classify_instructions:
+    description: ai_classify instructions (must match config/app_config.json; options must be a literal)
+    default: "Classify an AI, data, or analytics project request submitted by a business unit at a freight carrier. Pick the label that best matches the primary deliverable the requester wants built, not the data it uses."
+  duplicate_threshold:
+    description: Likely-duplicate threshold for the live check (tuned by ml/tune_duplicate_threshold.py)
+    default: "0.85"
+  cluster_threshold:
+    description: Document-to-document cosine for automatic gold duplicate clusters (high precision)
+    default: "0.92"
 
 resources:
-  database_instances:
-    oneintake-db:
-      name: "oneintake"
-      capacity: "CU_1"
-  apps:
-    oneintake-app:
-      name: "oneintake"
-      description: "oneintake created with apx"
-      source_code_path: ./.build
-      resources:
-        - name: "db"
-          database:
-            database_name: "databricks_postgres"
-            instance_name: ${resources.database_instances.oneintake-db.name}
-            permission: "CAN_CONNECT_AND_CREATE"
+  postgres_projects:
+    oneintake_db:
+      project_id: ${var.lakebase_project}
+      display_name: "AI Task Force intake"
+      pg_version: 17
+
+  pipelines:
+    intake_pipeline:
+      name: oneintake-medallion
+      catalog: ${var.catalog}
+      schema: silver
+      serverless: true
+      channel: PREVIEW
+      photon: true
+      libraries:
+        - file: { path: ./pipeline/bronze.sql }
+        - file: { path: ./pipeline/silver.sql }
+        - file: { path: ./pipeline/gold.sql }
+      configuration:
+        catalog: ${var.catalog}
+        embedding_endpoint: ${var.embedding_endpoint}
+        classify_instructions: ${var.classify_instructions}
+        cluster_threshold: ${var.cluster_threshold}
 
 targets:
   dev:
     mode: development
     default: true
+    variables:
+      catalog: oneintake_demo
+    workspace:
+      profile: DEFAULT

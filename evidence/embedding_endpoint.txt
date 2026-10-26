@@ -1,0 +1,3 @@
+# generated 2026-10-26T17:05:53+00:00
+available_embedding_endpoints=['databricks-bge-large-en', 'databricks-gte-large-en', 'databricks-qwen3-embedding-0-6b']
+chosen=databricks-bge-large-en

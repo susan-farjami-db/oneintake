@@ -1,10 +1,10 @@
-"""Planted near-duplicates and ambiguous requests."""
+"""Planted duplicates and ambiguous requests."""
 
 # (category, existing kind, existing title, existing description, new title, new description)
 PLANTED_PAIRS = [
     ("Generative AI Assistant", "project",
      "Agent ETA assistant",
-     "Assistant in the agent portal that answers where a load is and when it will arrive, using TMS tracking and ELD pings.",
+     "Chatbot agents can use to check the ETA of their loads, answered from TMS tracking and ELD pings instead of calling dispatch.",
      "Chatbot so agents can check load ETA",
      "Agents call dispatch all day to ask when a truck will show up. A chat bot that gives the arrival time for a load would save those calls."),
     ("Document Intelligence", "project",

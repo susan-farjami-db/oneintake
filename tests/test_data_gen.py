@@ -92,3 +92,10 @@ def test_deterministic(tmp_path):
     generate.main(tmp_path / "b")
     for rel in ["data/raw/opportunity_log.csv", "data/raw/project_tracker.json"]:
         assert (tmp_path / "a" / rel).read_text() == (tmp_path / "b" / rel).read_text()
+
+
+def test_bundle_config_matches_app_config():
+    cfg = json.loads((ROOT / "config" / "app_config.json").read_text())
+    bundle = (ROOT / "databricks.yml").read_text()
+    assert f'default: "{cfg["classify_instructions"]}"' in bundle
+    assert f'default: "{cfg["thresholds"]["likely_duplicate"]}"' in bundle

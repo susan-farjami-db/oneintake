@@ -133,6 +133,15 @@ def main(out_root=ROOT):
         w.writeheader()
         w.writerows(requests)
     (raw / "project_tracker.json").write_text(json.dumps(projects, indent=1))
+    # Rows that must fail silver expectations: null title, null description, bad unit, negative value.
+    bad = [dict(requests[i], request_id=str(uuid.UUID(int=rng.getrandbits(128), version=4)))
+           for i in range(4)]
+    bad[0]["title"], bad[1]["description"] = "", ""
+    bad[2]["business_unit"], bad[3]["est_value_usd"] = "Unassigned", -5000
+    with open(raw / "opportunity_log_rejects.csv", "w", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=cols, extrasaction="ignore")
+        w.writeheader()
+        w.writerows(bad)
 
     ev = out_root / "eval"
     ev.mkdir(exist_ok=True)
