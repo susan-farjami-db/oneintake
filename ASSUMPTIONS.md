@@ -50,3 +50,10 @@ Each entry: the decision, then the reason.
 - **A35. "Join existing" saves the request as `merged` with `duplicate_of` set**, so the portfolio counts the extra demand without a review step. It skips required-field validation beyond title and description.
 - **A36. The scaffold header dependency's `request_id` parameter was renamed to `x_request_id`.** It collided with the `/review/{request_id}` path parameter.
 - **A37. The API test runs against live services with the caller's CLI token as the OBO header** and deletes the rows it creates.
+
+## UI
+- **A38. The frontend toolchain follows what `apx` 0.3.8 installs.** `apx dev start` and `apx frontend build` rewrite `package.json` to newer Vite and OpenTelemetry versions. Those need `@opentelemetry/api` 1.10.0-rc.0 (which exports `SeverityNumber`), so it is pinned as a dev dependency.
+- **A39. Matching skips merged requests and projects as well as rejected ones.** A merged request points to its canonical item, which is the better match to offer.
+- **A40. Reviewed cards stay in the queue with their outcome until the page is reloaded**, so the reviewer sees what was done.
+- **A41. The demo-flow test resets its own demo rows** (the demo title and the fixed unique title) before each run, so the flow is repeatable.
+- **A42. Form fields are rendered by one shared component** (`components/intake/form-field.tsx`) from the config. A new field type falls back to a text input.

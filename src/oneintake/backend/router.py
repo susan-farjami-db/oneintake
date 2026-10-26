@@ -107,13 +107,14 @@ SELECT r.request_id, m.*
     SELECT * FROM (
       (SELECT p.source AS kind, p.project_key AS key, p.title, p.status, p.owner_email AS owner, p.business_unit,
               1 - (p.embedding <=> e.embedding) AS score
-         FROM serving.projects_synced p WHERE p.project_key <> r.request_id
+         FROM serving.projects_synced p
+        WHERE p.project_key <> r.request_id AND coalesce(p.status, '') NOT IN ('rejected', 'merged')
         ORDER BY p.embedding <=> e.embedding LIMIT 1)
       UNION ALL
       (SELECT 'request', o.request_id, o.title, o.status, o.requester_email, o.business_unit,
               1 - (oe.embedding <=> e.embedding)
          FROM serving.request_embeddings oe JOIN app.intake_requests o USING (request_id)
-        WHERE o.request_id <> r.request_id AND o.status <> 'rejected'
+        WHERE o.request_id <> r.request_id AND o.status NOT IN ('rejected', 'merged')
         ORDER BY oe.embedding <=> e.embedding LIMIT 1)) c
     ORDER BY score DESC LIMIT 1) m ON e.embedding IS NOT NULL
  WHERE r.status IN ('submitted', 'in_review')

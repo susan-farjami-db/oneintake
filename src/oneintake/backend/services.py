@@ -130,13 +130,13 @@ WITH q AS (SELECT CAST(:v AS vector) AS v)
 (SELECT 'request' AS kind, r.request_id AS key, r.title, r.status, r.requester_email AS owner,
         r.business_unit, 1 - (e.embedding <=> q.v) AS score
    FROM serving.request_embeddings e JOIN app.intake_requests r USING (request_id), q
-  WHERE r.status <> 'rejected' AND r.request_id <> :draft
+  WHERE r.status NOT IN ('rejected', 'merged') AND r.request_id <> :draft
   ORDER BY e.embedding <=> q.v LIMIT :k)
 UNION ALL
 (SELECT p.source, p.project_key, p.title, p.status, p.owner_email, p.business_unit,
         1 - (p.embedding <=> q.v)
    FROM serving.projects_synced p, q
-  WHERE coalesce(p.status, '') <> 'rejected' AND p.project_key <> :draft
+  WHERE coalesce(p.status, '') NOT IN ('rejected', 'merged') AND p.project_key <> :draft
   ORDER BY p.embedding <=> q.v LIMIT :k)
 """)
 

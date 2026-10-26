@@ -1,0 +1,161 @@
+"""Phase 5/8 self-check: the demo flow in a real browser, against the APX dev server or the deployed app.
+
+DEMO_BASE_URL defaults to the local dev server (APX OBO emulator). For a deployed app, the caller's
+OAuth token is sent as a bearer header. Writes evidence/<prefix>demo_flow.txt and screenshots.
+"""
+
+import os
+import sys
+import time
+from datetime import datetime, timezone
+from pathlib import Path
+
+import pytest
+
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "ops"))
+BASE = os.environ.get("DEMO_BASE_URL", "http://127.0.0.1:9002").rstrip("/")
+PREFIX = os.environ.get("DEMO_EVIDENCE_PREFIX", "")
+EVIDENCE = ROOT / "evidence"
+DEMO_TITLE = "Chatbot so agents can check load ETA"
+UNIQUE_PREFIX = "Predict reefer unit failures from temperature logs"
+pytestmark = pytest.mark.skipif(not os.environ.get("INTAKE_CATALOG"), reason="needs a live workspace")
+log: list[str] = []
+
+
+def note(msg):
+    log.append(f"{datetime.now(timezone.utc).strftime('%H:%M:%S')} {msg}")
+    print(log[-1])
+
+
+def shot(page, name):
+    page.screenshot(path=str(EVIDENCE / f"{PREFIX}demo_{name}.png"), full_page=True)
+
+
+def fill_form(page, title, description, unit="Agent Operations", value="250000"):
+    page.fill("#field-title", title)
+    page.fill("#field-description", description)
+    page.select_option("#field-business_unit", unit)
+    page.fill("#field-sponsor", "Demo Sponsor")
+    page.fill("#field-problem_statement", "Agents spend time on repetitive lookups.")
+    page.fill("#field-expected_benefit", "Faster answers for agents and customers.")
+    page.fill("#field-est_value_usd", value)
+    page.select_option("#field-urgency", "high")
+
+
+@pytest.fixture(scope="module")
+def page():
+    from playwright.sync_api import sync_playwright
+    headers = {}
+    if not BASE.startswith("http://127.0.0.1") and not BASE.startswith("http://localhost"):
+        from databricks.sdk import WorkspaceClient
+        headers = WorkspaceClient().config.authenticate()
+    EVIDENCE.mkdir(exist_ok=True)
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        ctx = browser.new_context(extra_http_headers=headers, viewport={"width": 1400, "height": 1000})
+        pg = ctx.new_page()
+        pg.set_default_timeout(20000)
+        yield pg
+        browser.close()
+    (EVIDENCE / f"{PREFIX}demo_flow.txt").write_text(f"base_url={BASE}\n" + "\n".join(log) + "\n")
+
+
+def reset_demo_rows():
+    """Remove rows left by earlier demo runs so the flow starts from the same state."""
+    import lb
+    from databricks.sdk import WorkspaceClient
+    with lb.connect(WorkspaceClient()) as conn:
+        ids = [r[0] for r in conn.execute(
+            "SELECT request_id FROM app.intake_requests WHERE title = %s OR title LIKE %s",
+            (DEMO_TITLE, UNIQUE_PREFIX + "%")).fetchall()]
+        conn.execute("DELETE FROM app.review_decisions WHERE request_id = ANY(%s)", (ids,))
+        conn.execute("DELETE FROM app.intake_requests WHERE request_id = ANY(%s)", (ids,))
+    note(f"reset {len(ids)} rows from earlier demo runs")
+
+
+def test_demo_flow(page):
+    from playwright.sync_api import expect
+    reset_demo_rows()
+    page.goto(f"{BASE}/submit")
+    expect(page.locator("#field-title")).to_be_visible()
+    note("opened Submit Request")
+
+    # 1. Live duplicate detection before the description is written.
+    start = time.perf_counter()
+    page.type("#field-title", DEMO_TITLE, delay=60)
+    likely = page.locator('[data-testid="similar-match"][data-band="likely_duplicate"]').filter(
+        has_text="Agent ETA assistant")
+    expect(likely).to_be_visible(timeout=10000)
+    score = float(likely.locator('[data-testid="match-score"]').inner_text())
+    assert page.input_value("#field-description") == "" and score >= 0.85
+    note(f"PASS likely duplicate 'Agent ETA assistant' score={score:.2f} shown "
+         f"{time.perf_counter() - start:.1f}s after typing started, description empty")
+    shot(page, "1_likely_duplicate")
+
+    # 2. Submit anyway requires a reason; the request goes to the review queue.
+    fill_form(page, DEMO_TITLE, "Agents want to check load ETA in chat without calling dispatch.")
+    page.click('[data-testid="submit-button"]')
+    expect(page.locator('[data-testid="duplicate-choice"]')).to_be_visible()
+    submit_anyway = page.get_by_role("button", name="Submit anyway")
+    assert submit_anyway.is_disabled()
+    page.fill('[data-testid="anyway-reason"]', "Brokerage agents need it in the agent portal, not the TMS.")
+    submit_anyway.click()
+    expect(page.locator('[data-testid="submit-result"]')).to_be_visible()
+    note("PASS Submit anyway required a reason and saved the duplicate request")
+    shot(page, "2_submitted_anyway")
+
+    # 3. A unique request gets its category within 5 seconds.
+    page.goto(f"{BASE}/submit")
+    unique = UNIQUE_PREFIX
+    fill_form(page, unique, "Use reefer temperature and alarm logs to predict compressor failures before a load spoils.",
+              unit="Safety and Compliance", value="410000")
+    page.wait_for_timeout(1500)
+    start = time.perf_counter()
+    page.click('[data-testid="submit-button"]')
+    category = page.locator('[data-testid="result-category"]')
+    expect(category).to_be_visible(timeout=10000)
+    elapsed = time.perf_counter() - start
+    assert category.inner_text() not in ("", "Pending") and elapsed < 5
+    note(f"PASS unique request categorized as '{category.inner_text()}' in {elapsed:.1f}s")
+    shot(page, "3_unique_categorized")
+
+    # 4. The reviewer approves the unique request and merges the duplicate.
+    page.goto(f"{BASE}/review")
+    card = page.locator(f'[data-testid="review-item"][data-title="{unique}"]').first
+    card.get_by_role("button", name="Approve").click()
+    expect(card.locator('[data-testid="review-done"]')).to_have_text("Marked approved.")
+    dup = page.locator(f'[data-testid="review-item"][data-title="{DEMO_TITLE}"]').first
+    expect(dup).to_contain_text("Agent ETA assistant")
+    target = dup.get_by_placeholder("Merge into id").input_value()
+    dup.get_by_role("button", name="Merge").click()
+    expect(dup.locator('[data-testid="review-done"]')).to_have_text("Marked merged.")
+    note(f"PASS reviewer approved '{unique}' and merged the duplicate into {target}")
+    shot(page, "4_review_done")
+
+    # 5. Both decisions are rows in Lakebase.
+    import lb
+    from databricks.sdk import WorkspaceClient
+    with lb.connect(WorkspaceClient()) as conn:
+        rows = conn.execute("""SELECT r.title, r.status, d.action, d.merged_into FROM app.review_decisions d
+                               JOIN app.intake_requests r USING (request_id)
+                               WHERE r.title IN (%s, %s) ORDER BY d.decided_at DESC LIMIT 2""",
+                            (unique, DEMO_TITLE)).fetchall()
+    actions = {r[2] for r in rows}
+    assert actions == {"approve", "merge"}, rows
+    note(f"PASS Lakebase review_decisions rows: {rows}")
+
+    # 6. Duplicate check failure shows the fallback message.
+    page.route("**/api/requests/check-duplicates", lambda route: route.fulfill(status=503, body="down"))
+    page.goto(f"{BASE}/submit")
+    page.type("#field-title", "Automate fuel card exception review weekly", delay=20)
+    expect(page.locator('[data-testid="dup-unavailable"]')).to_have_text("Duplicate check unavailable")
+    note("PASS 'Duplicate check unavailable' shown when the check fails")
+    shot(page, "5_check_unavailable")
+    page.unroute("**/api/requests/check-duplicates")
+
+    # 7. Portfolio KPIs.
+    page.goto(f"{BASE}/portfolio")
+    expect(page.locator('[data-testid="kpi"]')).to_have_count(3)
+    note("PASS Portfolio shows 3 KPI cards: " + " | ".join(t.replace("\n", " ") for t in page.locator('[data-testid="kpi"]').all_inner_texts()))
+    shot(page, "6_portfolio")
