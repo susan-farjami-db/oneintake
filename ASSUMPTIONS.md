@@ -57,3 +57,7 @@ Each entry: the decision, then the reason.
 - **A40. Reviewed cards stay in the queue with their outcome until the page is reloaded**, so the reviewer sees what was done.
 - **A41. The demo-flow test resets its own demo rows** (the demo title and the fixed unique title) before each run, so the flow is repeatable.
 - **A42. Form fields are rendered by one shared component** (`components/intake/form-field.tsx`) from the config. A new field type falls back to a text input.
+
+## Evaluation
+- **A43. The classifier evaluation uses the pipeline's exact `ai_classify` call** (version 2.1, config labels with descriptions, instructions, confidence) in one batched SQL statement. MLflow runs go to `/Users/<me>/oneintake-evaluation`, overridable with `MLFLOW_EXPERIMENT_NAME`. The evidence file is the source of truth; MLflow logging is best effort.
+- **A44. Threshold tuning scores pairs exactly like the live check** (query embedding with the BGE prefix against the stored document embedding). The rule (best F1 with precision ≥ 0.90) keeps `likely_duplicate` at 0.85: it is the only grid point meeting the precision floor, with recall 0.11. Recall comes from the `related` band: at 0.70, 17 of 18 planted duplicates appear as related or likely. Both bands are shown in the UI, and reviewers see the closest match.
