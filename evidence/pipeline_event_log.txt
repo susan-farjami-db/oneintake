@@ -1,4 +1,4 @@
-# generated 2026-10-26T17:49:26+00:00
+# generated 2026-10-26T20:46:25+00:00
 pipeline_id=00000000-0000-0000-0000-000000000000
 ## expectations (latest update)
 {"dataset": "oneintake_demo.silver.requests", "name": "business_unit_allowed", "passed": "303", "failed": "1"}
@@ -7,11 +7,11 @@ pipeline_id=00000000-0000-0000-0000-000000000000
 {"dataset": "oneintake_demo.silver.requests", "name": "title_not_null", "passed": "303", "failed": "1"}
 ## row counts
 {"t": "silver.requests", "n": "300"}
+{"t": "gold.projects", "n": "360"}
 {"t": "raw.bronze_opportunity_log", "n": "304"}
 {"t": "raw.bronze_projects", "n": "60"}
 {"t": "raw.bronze_intake_app", "n": "0"}
 {"t": "silver.requests_quarantine", "n": "4"}
-{"t": "gold.projects", "n": "360"}
 ## self-check
 bronze_rows_split_into_silver_or_quarantine: PASS
 gold_rows_equal_silver_plus_projects: PASS

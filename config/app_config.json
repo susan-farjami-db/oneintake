@@ -11,5 +11,6 @@
   ],
   "classify_instructions": "Classify an AI, data, or analytics project request submitted by a business unit at a freight carrier. Pick the label that best matches the primary deliverable the requester wants built, not the data it uses.",
   "thresholds": {"likely_duplicate": 0.85, "related": 0.70},
-  "duplicate_check": {"min_title_words": 4, "min_description_words": 15, "debounce_ms": 600, "rate_limit_per_sec": 2, "top_k": 3}
+  "duplicate_check": {"min_title_words": 4, "min_description_words": 15, "debounce_ms": 600, "rate_limit_per_sec": 2, "top_k": 3},
+  "embedding": {"endpoint": "databricks-bge-large-en", "query_prefix": "Represent this sentence for searching relevant passages: "}
 }

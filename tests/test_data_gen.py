@@ -45,9 +45,9 @@ def test_planted_pairs(out):
     reqs = {r["title"] for r in read_csv(out / "data/raw/opportunity_log.csv")}
     projs = {p["name"]: p for p in json.loads((out / "data/raw/project_tracker.json").read_text())}
     assert projs["Agent ETA assistant"]["status"] == "in_progress"
-    assert "Chatbot so agents can check load ETA" in reqs
+    assert generate.LIVE_DEMO_TITLE not in reqs
     for _c, kind, existing, _d, new, _nd in PLANTED_PAIRS:
-        assert new in reqs
+        assert new in reqs or new == generate.LIVE_DEMO_TITLE
         assert existing in (projs if kind == "project" else reqs)
     pairs = read_csv(out / "eval/duplicate_pairs.csv")
     assert sum(int(p["is_duplicate"]) for p in pairs) == len(PLANTED_PAIRS)

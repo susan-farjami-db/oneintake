@@ -14,6 +14,7 @@ from names import (BENEFITS, BUSINESS_UNITS, EMAIL_DOMAIN, FIRST_NAMES, LAST_NAM
 from seeds import AMBIGUOUS, PLANTED_PAIRS  # noqa: E402
 
 SEED = 20261026
+LIVE_DEMO_TITLE = "Chatbot so agents can check load ETA"
 ROOT = Path(__file__).resolve().parent.parent
 N_REQUESTS, N_PROJECTS = 300, 60
 TODAY = datetime(2026, 10, 20)
@@ -109,7 +110,10 @@ def main(out_root=ROOT):
             a = add_project(et, ed, cat, sys_, st)["project_id"]
         else:
             a = add_request(et, ed, cat, sys_, rng.choice(["in_review", "approved"]))["request_id"]
-        b = add_request(nt, nd, cat, sys_, "submitted", recent=True)["request_id"]
+        if nt == LIVE_DEMO_TITLE:  # typed live in the demo, so it stays out of the history
+            b = "LIVE-DEMO"
+        else:
+            b = add_request(nt, nd, cat, sys_, "submitted", recent=True)["request_id"]
         planted.append((a, et, ed, b, nt, nd))
     for t, d, cat, _sec in AMBIGUOUS:
         ambiguous_ids.append(add_request(t, d, cat, rng.sample(SYSTEMS, 2),

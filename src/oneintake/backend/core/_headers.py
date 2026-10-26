@@ -28,7 +28,7 @@ def get_databricks_headers(
     ] = None,
     user_id: Annotated[str | None, Header(alias="X-Forwarded-User")] = None,
     user_email: Annotated[str | None, Header(alias="X-Forwarded-Email")] = None,
-    request_id: Annotated[str | None, Header(alias="X-Request-Id")] = None,
+    x_request_id: Annotated[str | None, Header(alias="X-Request-Id")] = None,
     token: Annotated[str | None, Header(alias="X-Forwarded-Access-Token")] = None,
 ) -> DatabricksAppsHeaders:
     """Extract Databricks Apps headers from the incoming request."""
@@ -37,7 +37,7 @@ def get_databricks_headers(
         user_name=user_name,
         user_id=user_id,
         user_email=user_email,
-        request_id=UUID(request_id) if request_id else None,
+        request_id=UUID(x_request_id) if x_request_id else None,
         token=SecretStr(token) if token else None,
     )
 

@@ -40,3 +40,13 @@ Each entry: the decision, then the reason.
 - **A27. Row filters, tags, and comments are applied with ALTER after the pipeline runs.** They survived a full pipeline refresh in testing. The setup job reruns the governance section after each pipeline run anyway.
 - **A28. The governance self-check flips the runner's own `task_force` membership** to test the non-member path (mapped to Finance), then restores it. It waits for the warehouse membership cache (about 1 minute) and adds a nonce to each query to bypass the result cache.
 - **A29. `gold.portfolio_metrics` covers requests only** (`filter: source = 'request'`). It inherits the business-unit row filter from `gold.projects`.
+
+## API
+- **A30. The demo pair's new side ("Chatbot so agents can check load ETA") is kept out of the opportunity log.** It is the text the presenter types, so a historical copy would match itself. It stays in `eval/duplicate_pairs.csv` (id `LIVE-DEMO`).
+- **A31. The OBO identity is resolved with `current_user.me()` on the user token**, cached for 5 minutes per token hash. It drives `requester_email` (the form field is read-only), `/requests/mine`, the rate-limit key, and the `task_force` check.
+- **A32. Calls to the embedding endpoint, `ai_classify`, and Lakebase use the app service principal.** Users then need no warehouse or endpoint grants. The portfolio KPIs are the exception: they run as the user (OBO) so the business-unit row filter applies.
+- **A33. The synchronous `ai_classify` omits confidence scores** to keep the category within 5 seconds (about 1 second faster). The pipeline recomputes the category with confidence. Opening the form warms the warehouse in the background.
+- **A34. The duplicate search returns the top 3 across `app.intake_requests` (via `serving.request_embeddings`) and `serving.projects_synced`.** Results are deduplicated by key, and rejected items and the caller's draft id are excluded. The backend returns a band for each match, and the UI hides `none`.
+- **A35. "Join existing" saves the request as `merged` with `duplicate_of` set**, so the portfolio counts the extra demand without a review step. It skips required-field validation beyond title and description.
+- **A36. The scaffold header dependency's `request_id` parameter was renamed to `x_request_id`.** It collided with the `/review/{request_id}` path parameter.
+- **A37. The API test runs against live services with the caller's CLI token as the OBO header** and deletes the rows it creates.
