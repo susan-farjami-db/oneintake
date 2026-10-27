@@ -119,6 +119,7 @@ class RequestIn(BaseModel):
     dup_check_failed: bool = False
     submit_anyway_reason: str | None = None
     join_existing: str | None = Field(default=None, description="Key of the request or project to join")
+    submission_id: str | None = Field(default=None, description="Client id for the form; a resend returns the saved row")
 
 
 class RequestOut(BaseModel):

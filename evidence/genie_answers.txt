@@ -1,4 +1,4 @@
-# generated 2026-10-26T23:39:43+00:00
+# generated 2026-10-27T01:31:55+00:00
 space_title=AI Task Force portfolio
 comparison: Genie result rows vs reference SQL rows (same row count; each reference row's values found in a Genie row)
 ## Q1 MATCH: What is the backlog value by business unit?
@@ -6,8 +6,8 @@ reference rows (10): [['Capacity and Carrier Relations', '5849000.0'], ['Marketi
 genie rows (10): [['Technology', '6251000.0'], ['Capacity and Carrier Relations', '5849000.0'], ['Human Resources', '4149000.0'], ['Safety and Compliance', '3990000.0'], ['Agent Operations', '3787000.0'], ['Claims and Insurance', '3243000.0']]
 genie sql: SELECT `business_unit`, ROUND(SUM(`est_value_usd`), 0) AS `backlog_value_usd` FROM `oneintake_demo`.`gold`.`projects` WHERE `source` = 'request' AND `is_open` = true AND `business_unit` IS NOT NULL AND `est_value_usd` IS NOT NULL GROUP BY `business_unit` ORDER BY `backlog_value_usd` DESC
 ## Q2 MATCH: How many requests have been waiting more than 30 days?
-reference rows (1): [['155']]
-genie rows (1): [['155']]
+reference rows (1): [['156']]
+genie rows (1): [['156']]
 genie sql: SELECT COUNT(*) AS `request_count_waiting_more_than_30_days` FROM `oneintake_demo`.`gold`.`projects` WHERE `source` = 'request' AND `is_open` = true AND `submitted_at` IS NOT NULL AND datediff(current_date(), `submitted_at`) > 30
 ## Q3 MATCH: What is the duplicate rate by month?
 reference rows (13): [['2026-03-01T00:00:00.000Z', '0.17241'], ['2026-02-01T00:00:00.000Z', '0.04000'], ['2026-01-01T00:00:00.000Z', '0.14815'], ['2025-10-01T00:00:00.000Z', '0.00000'], ['2026-06-01T00:00:00.000Z', '0.12500'], ['2026-07-01T00:00:00.000Z', '0.11111']]
@@ -15,19 +15,19 @@ genie rows (13): [['2025-10-01T00:00:00.000Z', '0.00000'], ['2025-11-01T00:00:00
 genie sql: SELECT `month`, MEASURE(`duplicate_rate`) AS `duplicate_rate` FROM `oneintake_demo`.`gold`.`portfolio_metrics` WHERE `month` IS NOT NULL GROUP BY ALL ORDER BY `month` ASC
 ## Q4 MATCH: What are the top 5 requests by estimated value that are still in review?
 reference rows (5): [['Compliance monitoring of oversize load permits', '1213000.0'], ['Monthly scorecard on quick pay requests', '947000.0'], ['Automate the agent payout timing workflow', '835000.0'], ['Sync customer churn between systems', '416000.0'], ['Compliance monitoring of budget variance', '411000.0']]
-genie rows (5): [['b04308e4-9b28-4bc4-9133-dee46aaab20f', 'Compliance monitoring of oversize load permits', 'Safety and Compliance', 'casey.foster@example.com', '2026-06-18T00:00:00.000Z', '1213000'], ['0347552d-c8d4-42ff-8830-e5837f549ea9', 'Monthly scorecard on quick pay requests', 'Finance', 'kai.foster@example.com', '2026-03-01T00:00:00.000Z', '947000'], ['a9777321-98ce-4074-87f1-88c7277eb4c3', 'Automate the agent payout timing workflow', 'Human Resources', 'morgan.owens@example.com', '2026-05-27T00:00:00.000Z', '835000'], ['39d4ac66-d05a-46f1-8151-038b368710b5', 'Sync customer churn between systems', 'Human Resources', 'casey.garcia@example.com', '2026-01-26T00:00:00.000Z', '416000'], ['de5f7dca-5db9-43a3-b183-dd3ebb88edbd', 'Compliance monitoring of budget variance', 'Human Resources', 'blair.miller@example.com', '2026-09-26T00:00:00.000Z', '411000']]
-genie sql: SELECT `project_key`, `title`, `business_unit`, `owner_email`, `submitted_at`, CAST(ROUND(`est_value_usd`, 0) AS BIGINT) AS `est_value_usd` FROM `oneintake_demo`.`gold`.`projects` WHERE `source` = 'request' AND `status` = 'in_review' AND `est_value_usd` IS NOT NULL ORDER BY `est_value_usd` DESC LIMIT 5
+genie rows (5): [['b04308e4-9b28-4bc4-9133-dee46aaab20f', 'Compliance monitoring of oversize load permits', 'Safety and Compliance', 'casey.foster@example.com', '1213000.0', '2026-06-18T00:00:00.000Z'], ['0347552d-c8d4-42ff-8830-e5837f549ea9', 'Monthly scorecard on quick pay requests', 'Finance', 'kai.foster@example.com', '947000.0', '2026-03-01T00:00:00.000Z'], ['a9777321-98ce-4074-87f1-88c7277eb4c3', 'Automate the agent payout timing workflow', 'Human Resources', 'morgan.owens@example.com', '835000.0', '2026-05-27T00:00:00.000Z'], ['39d4ac66-d05a-46f1-8151-038b368710b5', 'Sync customer churn between systems', 'Human Resources', 'casey.garcia@example.com', '416000.0', '2026-01-26T00:00:00.000Z'], ['de5f7dca-5db9-43a3-b183-dd3ebb88edbd', 'Compliance monitoring of budget variance', 'Human Resources', 'blair.miller@example.com', '411000.0', '2026-09-26T00:00:00.000Z']]
+genie sql: SELECT `project_key`, `title`, `business_unit`, `owner_email`, `est_value_usd`, `submitted_at` FROM `oneintake_demo`.`gold`.`projects` WHERE `source` = 'request' AND `status` = 'in_review' AND `est_value_usd` IS NOT NULL ORDER BY `est_value_usd` DESC LIMIT 5
 ## Q5 MATCH: How many requests are there in each category?
-reference rows (7): [['Predictive Analytics', '48'], ['Risk and Compliance Analytics', '42'], ['Data Integration', '34'], ['Document Intelligence', '43'], ['Reporting and BI', '45'], ['Process Automation', '45']]
-genie rows (7): [['Predictive Analytics', '48'], ['Process Automation', '45'], ['Reporting and BI', '45'], ['Document Intelligence', '43'], ['Generative AI Assistant', '43'], ['Risk and Compliance Analytics', '42']]
+reference rows (7): [['Predictive Analytics', '50'], ['Risk and Compliance Analytics', '42'], ['Data Integration', '34'], ['Document Intelligence', '44'], ['Reporting and BI', '44'], ['Process Automation', '44']]
+genie rows (7): [['Predictive Analytics', '50'], ['Document Intelligence', '44'], ['Generative AI Assistant', '44'], ['Process Automation', '44'], ['Reporting and BI', '44'], ['Risk and Compliance Analytics', '42']]
 genie sql: SELECT `category`, MEASURE(`request_count`) AS `request_count` FROM `oneintake_demo`.`gold`.`portfolio_metrics` WHERE `category` IS NOT NULL GROUP BY ALL ORDER BY `request_count` DESC, `category` ASC
 ## Q6 MATCH: What is the average cycle time in days by business unit?
 reference rows (10): [['Capacity and Carrier Relations', '15.777777777777779'], ['Marketing', '17.692307692307693'], ['Claims and Insurance', '28.36842105263158'], ['Brokerage', '16.818181818181817'], ['Human Resources', '29.818181818181817'], ['Technology', '20.615384615384617']]
-genie rows (10): [['Human Resources', '29.818181818181817'], ['Finance', '29.25'], ['Claims and Insurance', '28.36842105263158'], ['Agent Operations', '26.2'], ['Safety and Compliance', '21.22222222222222'], ['Technology', '20.615384615384617']]
-genie sql: SELECT `business_unit`, MEASURE(`avg_cycle_days`) AS `avg_cycle_days` FROM `oneintake_demo`.`gold`.`portfolio_metrics` WHERE `business_unit` IS NOT NULL GROUP BY ALL ORDER BY `avg_cycle_days` DESC
+genie rows (10): [['Agent Operations', '23.818181818181817'], ['Brokerage', '16.818181818181817'], ['Capacity and Carrier Relations', '15.777777777777779'], ['Claims and Insurance', '28.36842105263158'], ['Customer Solutions', '15.764705882352942'], ['Finance', '29.25']]
+genie sql: SELECT `business_unit`, MEASURE(`avg_cycle_days`) AS `avg_cycle_days` FROM `oneintake_demo`.`gold`.`portfolio_metrics` WHERE `business_unit` IS NOT NULL GROUP BY ALL ORDER BY `business_unit` ASC
 ## Q7 MATCH: What is the total estimated value of approved requests?
-reference rows (1): [['1.4862E7']]
-genie rows (1): [['1.4862E7']]
+reference rows (1): [['1.5272E7']]
+genie rows (1): [['1.5272E7']]
 genie sql: SELECT MEASURE(`total_est_value`) AS `total_est_value` FROM `oneintake_demo`.`gold`.`portfolio_metrics` WHERE `status` = 'approved' GROUP BY ALL
 ## Q8 MATCH: How many tracked projects are in progress?
 reference rows (1): [['15']]
@@ -36,7 +36,7 @@ genie sql: SELECT COUNT(*) AS `in_progress_project_count` FROM `oneintake_demo`.
 ## Q9 MATCH: Which business unit submitted the most requests?
 reference rows (1): [['Capacity and Carrier Relations', '36']]
 genie rows (1): [['Capacity and Carrier Relations', '36']]
-genie sql: WITH business_unit_counts AS ( SELECT projects.business_unit AS `business_unit`, COUNT(*) AS `request_count`, RANK() OVER (ORDER BY COUNT(*) DESC) AS `request_rank` FROM `oneintake_demo`.`gold`.`projects` WHERE projects.source = 'request' AND projects.business_unit IS NOT NULL GROUP BY projects.business_unit ) SELECT business_unit_counts.business_unit AS `business_unit`, business_unit_counts.request_count AS `request_count` FROM business_unit_counts WHERE business_unit_counts.request_rank = 1 ORDER BY business_unit_counts.request_count DESC, business_unit_counts.business_unit
+genie sql: WITH `business_unit_counts` AS ( SELECT `business_unit`, COUNT(*) AS `request_count` FROM `oneintake_demo`.`gold`.`projects` WHERE `source` = 'request' AND `business_unit` IS NOT NULL GROUP BY `business_unit` ), `ranked_business_units` AS ( SELECT `business_unit`, `request_count`, RANK() OVER (ORDER BY `request_count` DESC) AS `request_rank` FROM `business_unit_counts` ) SELECT `business_unit`, `request_count` FROM `ranked_business_units` WHERE `request_rank` <= 1 ORDER BY `request_count` DESC, `business_unit` ASC
 ## Q10 MATCH: How many requests were submitted in September 2026?
 reference rows (1): [['16']]
 genie rows (1): [['16']]

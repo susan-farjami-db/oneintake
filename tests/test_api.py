@@ -8,6 +8,7 @@ import csv
 import os
 import statistics
 import time
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -106,6 +107,14 @@ def test_submit_classifies_and_lists_mine(client):
     assert body["category"] and body["classify_ms"] < 5000
     mine = client.get("/api/requests/mine").json()
     assert body["request_id"] in [m["request_id"] for m in mine]
+
+
+def test_resend_with_submission_id_returns_saved_row(client):
+    sid = str(uuid.uuid4())
+    title, desc = "Score dock door scheduling conflicts", "Flag dock appointments that overlap so yard staff can rebook."
+    first, again = submit(client, title, desc, submission_id=sid), submit(client, title, desc, submission_id=sid)
+    assert first.status_code == again.status_code == 200, again.text
+    assert first.json()["request_id"] == again.json()["request_id"] == sid
 
 
 def test_likely_duplicate_requires_reason(client):

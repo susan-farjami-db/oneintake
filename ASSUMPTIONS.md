@@ -60,3 +60,14 @@ Each entry: decision, then reason.
 - **A45.** The Genie space is managed by `genie/genie_space.py` through `w.genie.create_space`/`update_space`, keyed by title. Bundles have no Genie resource. Ids are md5 hashes of the content, so reruns are idempotent.
 - **A46.** Genie's answers are compared row by row with reference SQL, with numbers matching within 0.001 absolute or 0.5% relative, because the instructions ask Genie to round.
 - **A47.** The instructions list the exact status codes: without them, Genie filtered on `'in progress'` and missed `in_progress`.
+
+## Bundle and deploy
+- **A48.** App command and env live in the bundle's app `config` (no `app.yml`), so bundle variables resolve. `apx build` writes `.build/`, which `sync.include` uploads despite its `.gitignore`.
+- **A49.** The app runs one uvicorn worker with `--timeout-keep-alive 75`. One process keeps the warm-up, caches, and rate limiter consistent; sync endpoints still run on a thread pool.
+- **A50.** Submit is idempotent: the form sends a `submission_id`, and a resend returns the saved row. The UI retries 502/503/504 twice. About 1 in 4 cold demo runs saw a proxy 502 after 5 s on a request the app never logged; the root cause was not found, and the retry covers it.
+- **A51.** Jobs are serverless Python tasks calling `ops/run.py`. Leading `KEY=VALUE` arguments become env vars, because serverless tasks take no env block. `script` runs the ml and genie files and treats `SystemExit(0)` as success. `__file__` falls back to `sys.argv[0]`. No `numpy` pin: replacing the base NumPy aborted tasks (SIGABRT).
+- **A52.** `lakebase-setup` resolves the app service principal from `APP_NAME`, so the setup job grants it Lakebase access without a hard-coded id.
+- **A53.** Demo rows flow into gold through Lakehouse Sync and back into `projects_synced`, so the demo reset clears those copies too. Otherwise the "unique" demo request matches its own earlier copy.
+- **A54.** `genie_space_id` is a per-target bundle variable (an id, not a secret). Sharing the space with reviewers is left to the space owner.
+- **A55.** Evidence files redact workspace and app URLs. The lockfiles contain package-proxy URLs only.
+- **A56.** File count by the A2 rule: 29 authored files. Lockfiles, vendored shadcn components (and their `use-mobile` hook), and the generated eval CSVs are excluded.

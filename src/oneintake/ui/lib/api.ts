@@ -73,6 +73,7 @@ export interface RequestIn {
     dup_score?: number | null;
     fields: Record<string, unknown>;
     join_existing?: string | null;
+    submission_id?: string | null;
     submit_anyway_reason?: string | null;
 }
 export interface RequestOut {

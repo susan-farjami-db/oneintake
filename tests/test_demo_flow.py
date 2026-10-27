@@ -56,6 +56,8 @@ def page():
         ctx = browser.new_context(extra_http_headers=headers, viewport={"width": 1400, "height": 1000})
         pg = ctx.new_page()
         pg.set_default_timeout(20000)
+        pg.on("response", lambda r: r.status >= 500 and "/api/" in r.url and not r.request.is_navigation_request()
+              and note(f"HTTP {r.status} {r.request.method} {r.url.split('/api', 1)[1]} {dict(r.headers)}"))
         yield pg
         browser.close()
     (EVIDENCE / f"{PREFIX}demo_flow.txt").write_text(f"base_url={BASE}\n" + "\n".join(log) + "\n")
@@ -70,7 +72,11 @@ def reset_demo_rows():
             "SELECT request_id FROM app.intake_requests WHERE title = %s OR title LIKE %s",
             (DEMO_TITLE, UNIQUE_PREFIX + "%")).fetchall()]
         conn.execute("DELETE FROM app.review_decisions WHERE request_id = ANY(%s)", (ids,))
+        conn.execute("DELETE FROM serving.request_embeddings WHERE request_id = ANY(%s)", (ids,))
         conn.execute("DELETE FROM app.intake_requests WHERE request_id = ANY(%s)", (ids,))
+        # earlier demo rows reach gold through Lakehouse Sync and come back via sync-projects
+        conn.execute("DELETE FROM serving.projects_synced WHERE title = %s OR title LIKE %s",
+                     (DEMO_TITLE, UNIQUE_PREFIX + "%"))
     note(f"reset {len(ids)} rows from earlier demo runs")
 
 
@@ -156,6 +162,6 @@ def test_demo_flow(page):
 
     # 7. Portfolio KPIs.
     page.goto(f"{BASE}/portfolio")
-    expect(page.locator('[data-testid="kpi"]')).to_have_count(3)
+    expect(page.locator('[data-testid="kpi"]')).to_have_count(3, timeout=20000)
     note("PASS Portfolio shows 3 KPI cards: " + " | ".join(t.replace("\n", " ") for t in page.locator('[data-testid="kpi"]').all_inner_texts()))
     shot(page, "6_portfolio")

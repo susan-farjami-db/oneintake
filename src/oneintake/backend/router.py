@@ -57,6 +57,10 @@ def _to_out(r: IntakeRequest, classify_ms: int | None = None) -> RequestOut:
 def create_request(body: RequestIn, ws: Dependencies.Client, user_ws: Dependencies.UserClient,
                    session: Dependencies.Session):
     email, _ = svc.identity(user_ws)
+    if body.submission_id and (prior := session.get(IntakeRequest, body.submission_id)):
+        if prior.requester_email != email:
+            raise HTTPException(status_code=409, detail="submission_id already used")
+        return _to_out(prior)
     fields = dict(body.fields)
     missing = [f["field_name"] for f in svc.form_fields()
                if f["required"] and f["field_name"] != "requester_email" and fields.get(f["field_name"]) in (None, "", [])]
@@ -64,7 +68,7 @@ def create_request(body: RequestIn, ws: Dependencies.Client, user_ws: Dependenci
         raise HTTPException(status_code=422, detail=f"Missing required fields: {', '.join(missing)}")
     if body.dup_score is not None and body.dup_score >= svc.app_config()["thresholds"]["likely_duplicate"] \
             and not body.join_existing and not (body.submit_anyway_reason or "").strip():
-        raise HTTPException(status_code=422, detail="A reason is required to submit despite a likely duplicate")
+        raise HTTPException(status_code=422, detail="A reason is required for a likely duplicate")
     if isinstance(fields.get("data_sources"), list):
         fields["data_sources"] = ";".join(fields["data_sources"])
     fields["requester_email"] = email
@@ -73,6 +77,8 @@ def create_request(body: RequestIn, ws: Dependencies.Client, user_ws: Dependenci
                         dup_score=body.dup_score, dup_check_failed=body.dup_check_failed,
                         submit_anyway_reason=body.submit_anyway_reason,
                         duplicate_of=body.join_existing, status="merged" if body.join_existing else "submitted")
+    if body.submission_id:
+        req.request_id = body.submission_id
     start = time.perf_counter()
     try:
         req.category, req.category_confidence = svc.classify(ws, req.title, req.description)

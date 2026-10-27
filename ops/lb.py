@@ -2,6 +2,7 @@
 
 import json
 import os
+import re
 from pathlib import Path
 
 import psycopg
@@ -43,7 +44,7 @@ def split_sql(text: str) -> list[str]:
 
 def setup(w: WorkspaceClient, app_role: str | None = None) -> list[str]:
     text = (ROOT / "lakebase/setup.sql").read_text()
-    schema_sql, grant_sql = text.split("-- @grants", 1)
+    schema_sql, grant_sql = re.split(r"^-- @grants.*$", text, maxsplit=1, flags=re.M)
     log = []
     with connect(w) as conn:
         for stmt in split_sql(schema_sql):

@@ -1,0 +1,11 @@
+base_url=<app-url>
+01:26:26 reset 2 rows from earlier demo runs
+01:26:26 opened Submit Request
+01:26:30 PASS likely duplicate 'Agent ETA assistant' score=0.88 shown 3.5s after typing started, description empty
+01:26:33 PASS Submit anyway required a reason and saved the duplicate request
+01:26:38 PASS unique request categorized as 'Predictive Analytics' in 2.8s
+01:26:38 PASS reviewer approved 'Predict reefer unit failures from temperature logs' and merged the duplicate into PRJ-0001
+01:26:40 PASS Lakebase review_decisions rows: [('Chatbot so agents can check load ETA', 'merged', 'merge', 'PRJ-0001'), ('Predict reefer unit failures from temperature logs', 'approved', 'approve', None)]
+01:26:41 HTTP 503 POST /requests/check-duplicates {'content-length': '4'}
+01:26:42 PASS 'Duplicate check unavailable' shown when the check fails
+01:26:44 PASS Portfolio shows 3 KPI cards: Requests 302  $62,575,000 estimated annual value | Open backlog value $37,262,000  Submitted or in review | Duplicate rate 10.3%  Requests that repeat existing work

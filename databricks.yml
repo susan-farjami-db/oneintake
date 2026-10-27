@@ -28,8 +28,172 @@ variables:
   cluster_threshold:
     description: Document-to-document cosine for automatic gold duplicate clusters (high precision)
     default: "0.92"
+  genie_space_id:
+    description: Genie space id printed by genie/genie_space.py (empty hides the Genie button)
+    default: ""
+  task_force_group:
+    default: task_force
+
+sync:
+  include:
+    - .build/**
 
 resources:
+  apps:
+    oneintake_app:
+      name: oneintake-${bundle.target}
+      description: AI Task Force intake for the carrier
+      source_code_path: ./.build
+      user_api_scopes: [sql]
+      config:
+        command: ["uvicorn", "oneintake.backend.app:app", "--workers", "1", "--timeout-keep-alive", "75"]
+        env:
+          - { name: LAKEBASE_ENDPOINT, value_from: postgres }
+          - { name: DATABRICKS_SQL_WAREHOUSE_ID, value_from: sql_warehouse }
+          - { name: EMBEDDING_ENDPOINT, value_from: embedding }
+          - { name: INTAKE_CATALOG, value: "${var.catalog}" }
+          - { name: GENIE_SPACE_ID, value: "${var.genie_space_id}" }
+          - { name: TASK_FORCE_GROUP, value: "${var.task_force_group}" }
+      resources:
+        - name: postgres
+          postgres:
+            branch: projects/${var.lakebase_project}/branches/${var.lakebase_branch}
+            database: projects/${var.lakebase_project}/branches/${var.lakebase_branch}/databases/${var.lakebase_database_id}
+            permission: CAN_CONNECT_AND_CREATE
+        - name: sql_warehouse
+          sql_warehouse: { id: "${var.warehouse_id}", permission: CAN_USE }
+        - name: embedding
+          serving_endpoint: { name: "${var.embedding_endpoint}", permission: CAN_QUERY }
+
+  jobs:
+    data_setup:
+      name: oneintake-data-setup
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "4"
+            dependencies: [databricks-sdk>=0.157.0, "psycopg[binary]>=3.2", mlflow-skinny>=3.0]
+      tasks:
+        - task_key: bootstrap
+          environment_key: default
+          spark_python_task:
+            python_file: ./ops/run.py
+            parameters:
+              - "INTAKE_CATALOG=${var.catalog}"
+              - "DATABRICKS_SQL_WAREHOUSE_ID=${var.warehouse_id}"
+              - "LAKEBASE_PROJECT=${var.lakebase_project}"
+              - "LAKEBASE_BRANCH=${var.lakebase_branch}"
+              - "uc-sql"
+              - "governance/uc_setup.sql"
+              - "bootstrap"
+        - task_key: generate_and_upload
+          depends_on: [{ task_key: bootstrap }]
+          environment_key: default
+          spark_python_task:
+            python_file: ./ops/run.py
+            parameters:
+              - "INTAKE_CATALOG=${var.catalog}"
+              - "upload"
+        - task_key: lakebase_setup
+          depends_on: [{ task_key: bootstrap }]
+          environment_key: default
+          spark_python_task:
+            python_file: ./ops/run.py
+            parameters:
+              - "LAKEBASE_PROJECT=${var.lakebase_project}"
+              - "LAKEBASE_BRANCH=${var.lakebase_branch}"
+              - "APP_NAME=${resources.apps.oneintake_app.name}"
+              - "lakebase-setup"
+        - task_key: lakehouse_sync
+          depends_on: [{ task_key: lakebase_setup }]
+          environment_key: default
+          spark_python_task:
+            python_file: ./ops/run.py
+            parameters:
+              - "INTAKE_CATALOG=${var.catalog}"
+              - "LAKEBASE_PROJECT=${var.lakebase_project}"
+              - "LAKEBASE_BRANCH=${var.lakebase_branch}"
+              - "cdf"
+        - task_key: refresh_pipeline
+          depends_on: [{ task_key: generate_and_upload }, { task_key: lakehouse_sync }]
+          pipeline_task: { pipeline_id: "${resources.pipelines.intake_pipeline.id}" }
+        - task_key: pipeline_evidence
+          depends_on: [{ task_key: refresh_pipeline }]
+          environment_key: default
+          spark_python_task:
+            python_file: ./ops/run.py
+            parameters:
+              - "INTAKE_CATALOG=${var.catalog}"
+              - "DATABRICKS_SQL_WAREHOUSE_ID=${var.warehouse_id}"
+              - "pipeline-evidence"
+        - task_key: governance
+          depends_on: [{ task_key: refresh_pipeline }]
+          environment_key: default
+          spark_python_task:
+            python_file: ./ops/run.py
+            parameters:
+              - "INTAKE_CATALOG=${var.catalog}"
+              - "DATABRICKS_SQL_WAREHOUSE_ID=${var.warehouse_id}"
+              - "uc-sql"
+              - "governance/uc_setup.sql"
+              - "governance"
+        - task_key: metric_view
+          depends_on: [{ task_key: governance }]
+          environment_key: default
+          spark_python_task:
+            python_file: ./ops/run.py
+            parameters:
+              - "INTAKE_CATALOG=${var.catalog}"
+              - "DATABRICKS_SQL_WAREHOUSE_ID=${var.warehouse_id}"
+              - "uc-sql"
+              - "governance/uc_setup.sql"
+              - "metric_view"
+        - task_key: sync_projects
+          depends_on: [{ task_key: refresh_pipeline }]
+          environment_key: default
+          spark_python_task:
+            python_file: ./ops/run.py
+            parameters:
+              - "INTAKE_CATALOG=${var.catalog}"
+              - "DATABRICKS_SQL_WAREHOUSE_ID=${var.warehouse_id}"
+              - "LAKEBASE_PROJECT=${var.lakebase_project}"
+              - "LAKEBASE_BRANCH=${var.lakebase_branch}"
+              - "sync-projects"
+
+    evaluation:
+      name: oneintake-evaluation
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "4"
+            dependencies: [databricks-sdk>=0.157.0, "psycopg[binary]>=3.2", mlflow-skinny>=3.0]
+      tasks:
+        - task_key: classifier_eval
+          environment_key: default
+          spark_python_task:
+            python_file: ./ops/run.py
+            parameters:
+              - "DATABRICKS_SQL_WAREHOUSE_ID=${var.warehouse_id}"
+              - "script"
+              - "ml/evaluate_classifier.py"
+        - task_key: duplicate_threshold
+          environment_key: default
+          spark_python_task:
+            python_file: ./ops/run.py
+            parameters:
+              - "INTAKE_CATALOG=${var.catalog}"
+              - "DATABRICKS_SQL_WAREHOUSE_ID=${var.warehouse_id}"
+              - "script"
+              - "ml/tune_duplicate_threshold.py"
+        - task_key: genie_answers
+          environment_key: default
+          spark_python_task:
+            python_file: ./ops/run.py
+            parameters:
+              - "INTAKE_CATALOG=${var.catalog}"
+              - "DATABRICKS_SQL_WAREHOUSE_ID=${var.warehouse_id}"
+              - "script"
+              - "genie/genie_space.py"
   postgres_projects:
     oneintake_db:
       project_id: ${var.lakebase_project}
@@ -60,5 +224,6 @@ targets:
     default: true
     variables:
       catalog: oneintake_demo
+      genie_space_id: 
     workspace:
       profile: DEFAULT

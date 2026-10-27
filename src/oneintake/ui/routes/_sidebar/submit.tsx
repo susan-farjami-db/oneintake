@@ -24,7 +24,9 @@ const muted = "text-sm text-muted-foreground";
 function SubmitPage() {
   const { data: cfg } = useFormConfig();
   const { data: me } = useCurrentUser();
-  const create = useCreateRequest();
+  // A gateway error means the submit may not have reached the app; submission_id makes the resend safe.
+  const create = useCreateRequest({ mutation: { retry: (n, e) => n < 2 && [502, 503, 504].includes(e.status) } });
+  const [submissionId] = useState(() => crypto.randomUUID());
   const [values, setValues] = useState<Values>({});
   const [matches, setMatches] = useState<DuplicateMatch[]>([]);
   const [check, setCheck] = useState<CheckState>("idle");
@@ -80,7 +82,8 @@ function SubmitPage() {
     }
     const fields = { ...values, requester_email: me?.data.user_name ?? "" };
     const data = { fields, dup_score: best?.score ?? null, dup_check_failed: failed && !opts.join,
-      submit_anyway_reason: opts.anyway ? anywayReason : null, join_existing: opts.join?.key ?? null };
+      submit_anyway_reason: opts.anyway ? anywayReason : null, join_existing: opts.join?.key ?? null,
+      submission_id: submissionId };
     create.mutate({ params: {}, data }, {
       onSuccess: (r) => { setResult(r.data); setNeedsChoice(false); },
       onError: (e) => setError(JSON.stringify(e.body ?? e.message)),

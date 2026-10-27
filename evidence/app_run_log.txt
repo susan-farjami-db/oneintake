@@ -1,0 +1,42 @@
+# generated 2026-10-27T01:28:30Z
+# App deploy and run log, target dev. URLs are redacted. The HTTP 503 lines are the failure step 6 injects on purpose (Playwright route), not app errors.
+## jobs (bundle run, latest)
+oneintake-data-setup: TERMINATED SUCCESS (9 tasks: bootstrap, generate_and_upload, lakebase_setup, lakehouse_sync, refresh_pipeline, pipeline_evidence, governance, metric_view, sync_projects; synced_rows=362)
+oneintake-evaluation: TERMINATED SUCCESS (classifier accuracy=0.920; duplicate threshold kept 0.85; Genie RESULT 10/10 matched)
+## databricks bundle validate
+Name: oneintake
+Target: dev
+Validation OK!
+## databricks bundle deploy
+Files: 18 uploaded, 1 deleted
+Resources: 0 created, 1 changed, 0 deleted, 4 unchanged
+## cold run 1: databricks bundle run oneintake_app (restarts the app process), then the demo flow immediately
+✓ App started successfully
+1 passed in 21.26s
+01:26:41 HTTP 503 POST /requests/check-duplicates {'content-length': '4'}
+## cold run 2: databricks bundle run oneintake_app (restarts the app process), then the demo flow immediately
+✓ App started successfully
+1 passed in 21.70s
+01:27:13 HTTP 503 POST /requests/check-duplicates {'content-length': '4'}
+## cold run 3: databricks bundle run oneintake_app (restarts the app process), then the demo flow immediately
+✓ App started successfully
+1 passed in 20.71s
+01:27:43 HTTP 503 POST /requests/check-duplicates {'content-length': '4'}
+## cold run 4: databricks bundle run oneintake_app (restarts the app process), then the demo flow immediately
+✓ App started successfully
+1 passed in 21.84s
+01:28:13 HTTP 503 POST /requests/check-duplicates {'content-length': '4'}
+## app status
+app_status RUNNING | compute ACTIVE | resources ['postgres', 'sql_warehouse', 'embedding'] | user_api_scopes ['sql']
+## demo flow evidence (cold run 1, evidence/deployed_demo_flow.txt)
+base_url=<app-url>
+01:26:26 reset 2 rows from earlier demo runs
+01:26:26 opened Submit Request
+01:26:30 PASS likely duplicate 'Agent ETA assistant' score=0.88 shown 3.5s after typing started, description empty
+01:26:33 PASS Submit anyway required a reason and saved the duplicate request
+01:26:38 PASS unique request categorized as 'Predictive Analytics' in 2.8s
+01:26:38 PASS reviewer approved 'Predict reefer unit failures from temperature logs' and merged the duplicate into PRJ-0001
+01:26:40 PASS Lakebase review_decisions rows: [('Chatbot so agents can check load ETA', 'merged', 'merge', 'PRJ-0001'), ('Predict reefer unit failures from temperature logs', 'approved', 'approve', None)]
+01:26:41 HTTP 503 POST /requests/check-duplicates {'content-length': '4'}
+01:26:42 PASS 'Duplicate check unavailable' shown when the check fails
+01:26:44 PASS Portfolio shows 3 KPI cards: Requests 302  $62,575,000 estimated annual value | Open backlog value $37,262,000  Submitted or in review | Duplicate rate 10.3%  Requests that repeat existing work

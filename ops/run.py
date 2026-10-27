@@ -1,8 +1,8 @@
 """Ops runner used locally and by bundle jobs.
 
-Usage: python ops/run.py <command> [args]
+Usage: python ops/run.py [KEY=VALUE ...] <command> [args]   (KEY=VALUE pairs become env vars; used by jobs)
 Commands: discover | upload | lakebase-setup [app_role] | cdf | uc-sql <file> [section]
-          | sync-projects | pipeline-evidence
+          | sync-projects | pipeline-evidence | script <repo-relative .py> [args]
 Env: INTAKE_CATALOG, DATABRICKS_SQL_WAREHOUSE_ID, LAKEBASE_PROJECT, DATABRICKS_CONFIG_PROFILE
 """
 
@@ -10,6 +10,7 @@ import io
 import json
 import os
 import re
+import runpy
 import sys
 import time
 from datetime import datetime, timezone
@@ -19,10 +20,11 @@ from databricks.sdk import WorkspaceClient
 from databricks.sdk.service.postgres import CdfConfig
 from databricks.sdk.service.sql import Disposition, StatementState
 
-sys.path.insert(0, str(Path(__file__).parent))
+HERE = Path(globals().get("__file__") or sys.argv[0]).resolve().parent  # serverless tasks exec without __file__
+sys.path.insert(0, str(HERE))
 import lb  # noqa: E402
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = HERE.parent
 EVIDENCE = ROOT / "evidence"
 PREFERRED_EMBEDDINGS = ["databricks-bge-large-en", "databricks-gte-large-en",
                         "databricks-qwen3-embedding-0-6b"]
@@ -148,14 +150,28 @@ def pipeline_evidence(w):
 
 
 def main():
+    argv = sys.argv[1:]
+    while argv and re.match(r"^[A-Z_]+=", argv[0]):
+        k, v = argv.pop(0).split("=", 1)
+        os.environ[k] = v
     w = WorkspaceClient()
-    cmd, args = sys.argv[1], sys.argv[2:]
-    if cmd == "discover":
+    cmd, args = argv[0], argv[1:]
+    if cmd == "script":
+        sys.argv = args
+        try:
+            runpy.run_path(str(ROOT / args[0]), run_name="__main__")
+        except SystemExit as e:  # job runners report even exit code 0 as a failure
+            if e.code not in (0, None):
+                raise
+    elif cmd == "discover":
         discover(w)
     elif cmd == "upload":
         upload(w)
     elif cmd == "lakebase-setup":
-        print("\n".join(lb.setup(w, args[0] if args else None)))
+        role = args[0] if args else None
+        if not role and os.environ.get("APP_NAME"):
+            role = w.apps.get(os.environ["APP_NAME"]).service_principal_client_id
+        print("\n".join(lb.setup(w, role)))
     elif cmd == "cdf":
         cdf(w)
     elif cmd == "uc-sql":
