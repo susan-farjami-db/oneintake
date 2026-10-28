@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FormField, fieldClass } from "@/components/intake/form-field";
+import { JoinPreview } from "@/components/intake/join-preview";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import {
@@ -32,6 +33,7 @@ function SubmitPage() {
   const [check, setCheck] = useState<CheckState>("idle");
   const [anywayReason, setAnywayReason] = useState("");
   const [needsChoice, setNeedsChoice] = useState(false);
+  const [joinTarget, setJoinTarget] = useState<DuplicateMatch | null>(null);
   const [result, setResult] = useState<RequestOut | null>(null);
   const [error, setError] = useState("");
   const inflight = useRef<AbortController | null>(null);
@@ -120,7 +122,7 @@ function SubmitPage() {
               <textarea className={fieldClass} placeholder="Why submit anyway?" value={anywayReason}
                 data-testid="anyway-reason" onChange={(e) => setAnywayReason(e.target.value)} />
               <div className="flex gap-2">
-                <Button type="button" onClick={() => void submit({ join: top })}>Join existing</Button>
+                <Button type="button" onClick={() => setJoinTarget(top)}>Join existing</Button>
                 <Button type="button" variant="outline" disabled={!anywayReason.trim()}
                   onClick={() => void submit({ anyway: true })}>Submit anyway</Button>
               </div>
@@ -131,7 +133,11 @@ function SubmitPage() {
           {create.isPending ? "Submitting and classifying..." : "Submit request"}
         </Button>
       </form>
-      <SimilarPanel check={check} matches={visible} ready={ready} onJoin={(m) => void submit({ join: m })} />
+      <SimilarPanel check={check} matches={visible} ready={ready} onJoin={setJoinTarget} />
+      <JoinPreview match={joinTarget} description={description} pending={create.isPending}
+        onDescriptionChange={(v) => setValues((s) => ({ ...s, description: v }))}
+        onCancel={() => setJoinTarget(null)}
+        onConfirm={() => { const m = joinTarget; setJoinTarget(null); void submit({ join: m! }); }} />
     </div>
   );
 }

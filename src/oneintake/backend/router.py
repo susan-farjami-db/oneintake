@@ -9,9 +9,8 @@ from sqlmodel import col, select, text
 
 from . import services as svc
 from .core import Dependencies, create_router
-from .models import (DuplicateCheckIn, DuplicateCheckOut, FormConfigOut, FormFieldOut,
-                     PortfolioOut,
-                     IntakeRequest, RequestIn, RequestOut, ReviewDecision, ReviewIn, ReviewItemOut, ReviewOut)
+from .models import (DuplicateCheckIn, DuplicateCheckOut, FormConfigOut, FormFieldOut, IntakeRequest,
+                     PortfolioOut, RequestIn, RequestOut, ReviewDecision, ReviewIn, ReviewItemOut, ReviewOut)
 
 router = create_router()
 log = logging.getLogger(__name__)
@@ -31,8 +30,7 @@ def form_config(session: Dependencies.Session, ws: Dependencies.Client):
     labels = session.execute(text("SELECT label FROM app.category_labels WHERE active ORDER BY label")).scalars()
     cfg = svc.app_config()
     return FormConfigOut(organization_label=cfg["organization_label"], fields=[FormFieldOut(**r) for r in rows],
-                         categories=list(labels), thresholds=cfg["thresholds"],
-                         duplicate_check=cfg["duplicate_check"])
+                         categories=list(labels), thresholds=cfg["thresholds"], duplicate_check=cfg["duplicate_check"])
 
 
 @router.post("/requests/check-duplicates", response_model=DuplicateCheckOut, operation_id="checkDuplicates")
@@ -62,9 +60,11 @@ def create_request(body: RequestIn, ws: Dependencies.Client, user_ws: Dependenci
             raise HTTPException(status_code=409, detail="submission_id already used")
         return _to_out(prior)
     fields = dict(body.fields)
-    missing = [f["field_name"] for f in svc.form_fields()
-               if f["required"] and f["field_name"] != "requester_email" and fields.get(f["field_name"]) in (None, "", [])]
-    if missing and not body.join_existing:
+    missing = [fn for f in svc.form_fields() if f["required"] and (fn := f["field_name"]) != "requester_email"
+               and fields.get(fn) in (None, "", [])]
+    if body.join_existing:  # still needs the NOT NULL columns, just not the rest
+        missing = [m for m in missing if m in ("title", "description")]
+    if missing:
         raise HTTPException(status_code=422, detail=f"Missing required fields: {', '.join(missing)}")
     if body.dup_score is not None and body.dup_score >= svc.app_config()["thresholds"]["likely_duplicate"] \
             and not body.join_existing and not (body.submit_anyway_reason or "").strip():
@@ -74,15 +74,14 @@ def create_request(body: RequestIn, ws: Dependencies.Client, user_ws: Dependenci
     fields["requester_email"] = email
     req = IntakeRequest(**{k: v for k, v in fields.items() if k in COLUMNS},
                         extra_fields={k: v for k, v in fields.items() if k not in COLUMNS},
-                        dup_score=body.dup_score, dup_check_failed=body.dup_check_failed,
-                        submit_anyway_reason=body.submit_anyway_reason,
-                        duplicate_of=body.join_existing, status="merged" if body.join_existing else "submitted")
+                        dup_score=body.dup_score, dup_check_failed=body.dup_check_failed, duplicate_of=body.join_existing,
+                        submit_anyway_reason=body.submit_anyway_reason, status="merged" if body.join_existing else "submitted")
     if body.submission_id:
         req.request_id = body.submission_id
     start = time.perf_counter()
     try:
         req.category, req.category_confidence = svc.classify(ws, req.title, req.description)
-    except Exception as e:  # the request is still saved; the pipeline classifies it again
+    except Exception as e:  # saved anyway; pipeline reclassifies later
         log.warning(f"ai_classify failed: {e}")
     classify_ms = int((time.perf_counter() - start) * 1000)
     session.add(req)
@@ -166,7 +165,7 @@ def review_request(request_id: str, body: ReviewIn, user_ws: Dependencies.UserCl
 
 @router.get("/portfolio/summary", response_model=PortfolioOut, operation_id="portfolioSummary")
 def portfolio_summary(ws: Dependencies.Client, user_ws: Dependencies.UserClient):
-    """KPIs from gold.portfolio_metrics, queried as the user so the business-unit row filter applies."""
+    """KPIs from gold.portfolio_metrics, queried as the user (row filter applies)."""
     row = svc.portfolio_kpis(user_ws)
     space = os.environ.get("GENIE_SPACE_ID")
     url = f"{ws.config.host.rstrip('/')}/genie/rooms/{space}" if space else None

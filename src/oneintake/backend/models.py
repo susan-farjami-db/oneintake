@@ -163,3 +163,36 @@ class PortfolioOut(BaseModel):
     open_backlog_value: float
     duplicate_rate: float
     genie_url: str | None
+
+
+class GenieConfigOut(BaseModel):
+    configured: bool
+    questions: list[str]
+    runs_as: Literal["user"] = "user"
+
+
+class GenieAskIn(BaseModel):
+    question: str
+    conversation_id: str | None = None
+
+
+class GenieAskOut(BaseModel):
+    conversation_id: str
+    answer: str
+    sql: str | None = None
+    columns: list[str] = []
+    rows: list[list[str]] = []
+
+
+class MatchDetailOut(BaseModel):
+    """Full detail for one duplicate match, shown before the requester confirms Join existing."""
+    kind: str
+    key: str
+    title: str
+    description: str | None
+    status: str | None
+    owner: str | None
+    business_unit: str | None
+    est_value_usd: float | None
+    category: str | None
+    updated_at: datetime | None

@@ -25,9 +25,9 @@
     "devDependencies": {
         "@opentelemetry/api": "1.10.0-rc.0",
         "@opentelemetry/api-logs": "^0.223.0",
-        "@opentelemetry/exporter-logs-otlp-http": "^0.300.0-rc.0",
-        "@opentelemetry/resources": "^3.0.0-rc.0",
-        "@opentelemetry/sdk-logs": "^3.0.0-rc.0",
+        "@opentelemetry/exporter-logs-otlp-http": "^0.300.0",
+        "@opentelemetry/resources": "^3.0.0",
+        "@opentelemetry/sdk-logs": "^3.0.0",
         "@tailwindcss/vite": "^4.3.3",
         "@tanstack/router-generator": "^1.167.45",
         "@tanstack/router-plugin": "^1.168.47",
@@ -37,6 +37,6 @@
         "@vitejs/plugin-react": "^6.1.2",
         "smol-toml": "1.6.0",
         "typescript": "5.9.3",
-        "vite": "^8.3.4"
+        "vite": "^8.3.5"
     }
 }

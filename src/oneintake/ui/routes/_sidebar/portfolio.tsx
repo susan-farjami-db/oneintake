@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { GenieChat } from "@/components/intake/genie-chat";
 import { usePortfolioSummary } from "@/lib/api";
 import { usd } from "./mine";
 
@@ -26,18 +26,16 @@ function Portfolio() {
   const p = data.data;
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold">AI portfolio</h1>
-        {p.genie_url && (
-          <Button asChild><a href={p.genie_url} target="_blank" rel="noreferrer">Ask Genie about the portfolio</a></Button>
-        )}
-      </div>
+      <h1 className="text-2xl font-semibold">AI portfolio</h1>
       <div className="grid gap-4 md:grid-cols-3">
         <Kpi label="Requests" value={p.request_count.toLocaleString()} hint={`${usd(p.total_est_value)} estimated annual value`} />
         <Kpi label="Open backlog value" value={usd(p.open_backlog_value)} hint="Submitted or in review" />
         <Kpi label="Duplicate rate" value={`${(p.duplicate_rate * 100).toFixed(1)}%`} hint="Requests that repeat existing work" />
       </div>
-      <p className="text-sm text-muted-foreground">Figures come from the governed metric view and respect your business-unit access.</p>
+      <p className="text-sm text-muted-foreground">
+        Figures come from the governed metric view and respect your business-unit access. Ask Genie below; it runs as you.
+      </p>
+      <GenieChat configured={Boolean(p.genie_url)} />
     </div>
   );
 }

@@ -8,7 +8,7 @@ An intake app where business units at the carrier propose AI, data, and analytic
 flowchart LR
   subgraph App["Databricks App (APX: FastAPI + React)"]
     UI["React UI<br/>submit, mine, review, portfolio"]
-    API["FastAPI<br/>OBO identity, rate limit"]
+    API["FastAPI<br/>OBO identity, Genie proxy"]
   end
   subgraph LB["Lakebase Postgres (Autoscaling)"]
     APPDB[("app.*<br/>requests, decisions, config")]
@@ -34,7 +34,7 @@ flowchart LR
   GOLD -- "ops/run.py sync-projects" --> SERV
   OPS -. "row filter, tags" .-> SILVER & GOLD
   GOLD --> GENIE
-  UI -. "Ask Genie" .-> GENIE
+  API -- "Genie OBO" --> GENIE
 ```
 
 ## Repo map

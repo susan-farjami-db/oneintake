@@ -54,8 +54,36 @@ export interface FormFieldOut {
     required: boolean;
     type: string;
 }
+export interface GenieAskIn {
+    conversation_id?: string | null;
+    question: string;
+}
+export interface GenieAskOut {
+    answer: string;
+    columns?: string[];
+    conversation_id: string;
+    rows?: string[][];
+    sql?: string | null;
+}
+export interface GenieConfigOut {
+    configured: boolean;
+    questions: string[];
+    runs_as?: "user";
+}
 export interface HTTPValidationError {
     detail?: ValidationError[];
+}
+export interface MatchDetailOut {
+    business_unit: string | null;
+    category: string | null;
+    description: string | null;
+    est_value_usd: number | null;
+    key: string;
+    kind: string;
+    owner: string | null;
+    status: string | null;
+    title: string;
+    updated_at: string | null;
 }
 export interface Name {
     family_name?: string | null;
@@ -279,6 +307,181 @@ export function useFormConfigSuspense<TData = {
     return useSuspenseQuery({
         queryKey: formConfigKey(),
         queryFn: ()=>formConfig(),
+        ...options?.query
+    });
+}
+export interface AskGenieParams {
+    "X-Forwarded-Host"?: string | null;
+    "X-Forwarded-Preferred-Username"?: string | null;
+    "X-Forwarded-User"?: string | null;
+    "X-Forwarded-Email"?: string | null;
+    "X-Request-Id"?: string | null;
+    "X-Forwarded-Access-Token"?: string | null;
+}
+export const askGenie = async (data: GenieAskIn, params?: AskGenieParams, options?: RequestInit): Promise<{
+    data: GenieAskOut;
+}> =>{
+    const res = await fetch("/api/genie/ask", {
+        ...options,
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            ...(params?.["X-Forwarded-Host"] != null && {
+                "X-Forwarded-Host": params["X-Forwarded-Host"]
+            }),
+            ...(params?.["X-Forwarded-Preferred-Username"] != null && {
+                "X-Forwarded-Preferred-Username": params["X-Forwarded-Preferred-Username"]
+            }),
+            ...(params?.["X-Forwarded-User"] != null && {
+                "X-Forwarded-User": params["X-Forwarded-User"]
+            }),
+            ...(params?.["X-Forwarded-Email"] != null && {
+                "X-Forwarded-Email": params["X-Forwarded-Email"]
+            }),
+            ...(params?.["X-Request-Id"] != null && {
+                "X-Request-Id": params["X-Request-Id"]
+            }),
+            ...(params?.["X-Forwarded-Access-Token"] != null && {
+                "X-Forwarded-Access-Token": params["X-Forwarded-Access-Token"]
+            }),
+            ...options?.headers
+        },
+        body: JSON.stringify(data)
+    });
+    if (!res.ok) {
+        const body = await res.text();
+        let parsed: unknown;
+        try {
+            parsed = JSON.parse(body);
+        } catch  {
+            parsed = body;
+        }
+        throw new ApiError(res.status, res.statusText, parsed);
+    }
+    return {
+        data: await res.json()
+    };
+};
+export function useAskGenie(options?: {
+    mutation?: UseMutationOptions<{
+        data: GenieAskOut;
+    }, ApiError, {
+        params: AskGenieParams;
+        data: GenieAskIn;
+    }>;
+}) {
+    return useMutation({
+        mutationFn: (vars)=>askGenie(vars.data, vars.params),
+        ...options?.mutation
+    });
+}
+export const genieConfig = async (options?: RequestInit): Promise<{
+    data: GenieConfigOut;
+}> =>{
+    const res = await fetch("/api/genie/config", {
+        ...options,
+        method: "GET"
+    });
+    if (!res.ok) {
+        const body = await res.text();
+        let parsed: unknown;
+        try {
+            parsed = JSON.parse(body);
+        } catch  {
+            parsed = body;
+        }
+        throw new ApiError(res.status, res.statusText, parsed);
+    }
+    return {
+        data: await res.json()
+    };
+};
+export const genieConfigKey = ()=>{
+    return [
+        "/api/genie/config"
+    ] as const;
+};
+export function useGenieConfig<TData = {
+    data: GenieConfigOut;
+}>(options?: {
+    query?: Omit<UseQueryOptions<{
+        data: GenieConfigOut;
+    }, ApiError, TData>, "queryKey" | "queryFn">;
+}) {
+    return useQuery({
+        queryKey: genieConfigKey(),
+        queryFn: ()=>genieConfig(),
+        ...options?.query
+    });
+}
+export function useGenieConfigSuspense<TData = {
+    data: GenieConfigOut;
+}>(options?: {
+    query?: Omit<UseSuspenseQueryOptions<{
+        data: GenieConfigOut;
+    }, ApiError, TData>, "queryKey" | "queryFn">;
+}) {
+    return useSuspenseQuery({
+        queryKey: genieConfigKey(),
+        queryFn: ()=>genieConfig(),
+        ...options?.query
+    });
+}
+export interface MatchDetailParams {
+    key: string;
+}
+export const matchDetail = async (params: MatchDetailParams, options?: RequestInit): Promise<{
+    data: MatchDetailOut;
+}> =>{
+    const res = await fetch(`/api/matches/${params.key}`, {
+        ...options,
+        method: "GET"
+    });
+    if (!res.ok) {
+        const body = await res.text();
+        let parsed: unknown;
+        try {
+            parsed = JSON.parse(body);
+        } catch  {
+            parsed = body;
+        }
+        throw new ApiError(res.status, res.statusText, parsed);
+    }
+    return {
+        data: await res.json()
+    };
+};
+export const matchDetailKey = (params?: MatchDetailParams)=>{
+    return [
+        "/api/matches/{key}",
+        params
+    ] as const;
+};
+export function useMatchDetail<TData = {
+    data: MatchDetailOut;
+}>(options: {
+    params: MatchDetailParams;
+    query?: Omit<UseQueryOptions<{
+        data: MatchDetailOut;
+    }, ApiError, TData>, "queryKey" | "queryFn">;
+}) {
+    return useQuery({
+        queryKey: matchDetailKey(options.params),
+        queryFn: ()=>matchDetail(options.params),
+        ...options?.query
+    });
+}
+export function useMatchDetailSuspense<TData = {
+    data: MatchDetailOut;
+}>(options: {
+    params: MatchDetailParams;
+    query?: Omit<UseSuspenseQueryOptions<{
+        data: MatchDetailOut;
+    }, ApiError, TData>, "queryKey" | "queryFn">;
+}) {
+    return useSuspenseQuery({
+        queryKey: matchDetailKey(options.params),
+        queryFn: ()=>matchDetail(options.params),
         ...options?.query
     });
 }

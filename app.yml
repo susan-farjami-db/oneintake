@@ -1,0 +1,28 @@
+# Databricks Apps reads this file from source_code_path (.build after `apx build`).
+# Bundle `config.command` does not substitute for it at runtime.
+command:
+  - uvicorn
+  - oneintake.backend.app:app
+  - --host
+  - "0.0.0.0"
+  - --port
+  - "8000"
+  - --workers
+  - "1"
+  - --timeout-keep-alive
+  - "75"
+env:
+  # Apps runtime reads variables from this manifest, not bundle config.env.
+  # Keep these ordinary configuration values here; resource identifiers use valueFrom below.
+  - name: INTAKE_CATALOG
+    value: oneintake_demo
+  - name: TASK_FORCE_GROUP
+    value: task_force
+  - name: LAKEBASE_ENDPOINT
+    valueFrom: postgres
+  - name: DATABRICKS_SQL_WAREHOUSE_ID
+    valueFrom: sql_warehouse
+  - name: EMBEDDING_ENDPOINT
+    valueFrom: embedding
+  - name: GENIE_SPACE_ID
+    valueFrom: genie-space

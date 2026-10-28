@@ -44,16 +44,7 @@ resources:
       name: oneintake-${bundle.target}
       description: AI Task Force intake for the carrier
       source_code_path: ./.build
-      user_api_scopes: [sql]
-      config:
-        command: ["uvicorn", "oneintake.backend.app:app", "--workers", "1", "--timeout-keep-alive", "75"]
-        env:
-          - { name: LAKEBASE_ENDPOINT, value_from: postgres }
-          - { name: DATABRICKS_SQL_WAREHOUSE_ID, value_from: sql_warehouse }
-          - { name: EMBEDDING_ENDPOINT, value_from: embedding }
-          - { name: INTAKE_CATALOG, value: "${var.catalog}" }
-          - { name: GENIE_SPACE_ID, value: "${var.genie_space_id}" }
-          - { name: TASK_FORCE_GROUP, value: "${var.task_force_group}" }
+      user_api_scopes: [sql, genie]
       resources:
         - name: postgres
           postgres:
@@ -64,6 +55,11 @@ resources:
           sql_warehouse: { id: "${var.warehouse_id}", permission: CAN_USE }
         - name: embedding
           serving_endpoint: { name: "${var.embedding_endpoint}", permission: CAN_QUERY }
+        - name: genie-space
+          genie_space:
+            name: AI Task Force portfolio
+            space_id: "${var.genie_space_id}"
+            permission: CAN_RUN
 
   jobs:
     data_setup:

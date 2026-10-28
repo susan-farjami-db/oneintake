@@ -1,5 +1,5 @@
-# generated 2026-10-27T01:21:59+00:00
+# generated 2026-10-27T19:52:38+00:00
 calls=40 (20 cache misses then the same 20 as cache hits), server-side ms
-cold p50=413 p95=580 max=584
-warm p50=78 p95=82 max=82
-overall p95=500 target<800 PASS
+cold p50=372 p95=574 max=577
+warm p50=79 p95=127 max=129
+overall p95=514 target<800 PASS

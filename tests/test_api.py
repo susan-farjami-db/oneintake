@@ -121,6 +121,25 @@ def test_likely_duplicate_requires_reason(client):
     assert submit(client, DEMO_TITLE, "Agents ask for ETA.", dup_score=0.9).status_code == 422
 
 
+def test_join_existing_still_needs_description(client):
+    """Regression: Join existing used to skip ALL required fields, crashing the NOT-NULL
+    description column with an unhandled 500 instead of a clean 422."""
+    r = client.post("/api/requests", json={"fields": {"title": "Join with no description"},
+                                            "join_existing": "PRJ-0001"})
+    assert r.status_code == 422 and "description" in r.json()["detail"]
+    r = submit(client, "Agent chat UI follow-up", "Joining an existing tracked project.",
+               join_existing="PRJ-0001")
+    assert r.status_code == 200 and r.json()["status"] == "merged"
+
+
+def test_match_detail_for_project_and_unknown(client):
+    r = client.get("/api/matches/PRJ-0001")
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["key"] == "PRJ-0001" and body["title"]
+    assert client.get("/api/matches/does-not-exist").status_code == 404
+
+
 def test_excludes_rejected_and_own_draft(client):
     title = "Predict pallet jack maintenance windows from sensor logs"
     rid = submit(client, title, "Use pallet jack sensor logs to schedule maintenance before breakdowns.").json()[
@@ -155,3 +174,14 @@ def test_review_requires_task_force(client, monkeypatch):
     from oneintake.backend import services
     monkeypatch.setattr(services, "TASK_FORCE_GROUP", "group_nobody_is_in")
     assert client.get("/api/review/queue").status_code == 403
+
+
+def test_genie_config_and_ask(client):
+    cfg = client.get("/api/genie/config").json()
+    assert cfg["configured"] and cfg["runs_as"] == "user" and len(cfg["questions"]) >= 4
+    r = client.post("/api/genie/ask", json={"question": cfg["questions"][1]})
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["conversation_id"] and (body["sql"] or body["answer"])
+    if body["sql"]:
+        assert "gold" in body["sql"].lower()

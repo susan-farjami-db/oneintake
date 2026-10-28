@@ -1,19 +1,12 @@
 base_url=http://127.0.0.1:9002
-21:42:37 reset 3 rows from earlier demo runs
-21:42:37 opened Submit Request
-21:42:41 PASS likely duplicate 'Agent ETA assistant' score=0.88 shown 4.1s after typing started, description empty
-21:42:46 PASS Submit anyway required a reason and saved the duplicate request
-21:42:51 PASS unique request categorized as 'Predictive Analytics' in 3.3s
-21:42:53 PASS reviewer approved 'Predict reefer unit failures from temperature logs' and merged the duplicate into PRJ-0001
-21:42:54 PASS Lakebase review_decisions rows: [('Chatbot so agents can check load ETA', 'merged', 'merge', 'PRJ-0001'), ('Predict reefer unit failures from temperature logs', 'approved', 'approve', None)]
-21:42:56 PASS 'Duplicate check unavailable' shown when the check fails
-21:42:58 PASS Portfolio shows 3 KPI cards: Requests
-300
-
-$61,915,000 estimated annual value | Open backlog value
-$37,262,000
-
-Submitted or in review | Duplicate rate
-10.0%
-
-Requests that repeat existing work
+20:04:48 reset 1 rows from earlier runs
+20:04:48 opened Submit
+20:04:51 PASS likely dup score=0.88 3.1s after typing, desc empty
+20:04:56 PASS Submit anyway needed a reason, saved dup
+20:05:01 PASS categorized 'Predictive Analytics' in 3.8s
+20:05:04 PASS approved 'Predict reefer unit failures from temperature logs', merged dup into PRJ-0001
+20:05:05 PASS review rows: [('Chatbot so agents can check load ETA', 'merged', 'merge', 'PRJ-0001'), ('Predict reefer unit failures from temperature logs', 'approved', 'approve', None)]
+20:05:07 HTTP 503 POST /requests/check-duplicates
+20:05:07 PASS fallback message shown when check fails
+20:05:10 PASS Portfolio KPIs: Requests 302  $62,575,000 estimated annual value | Open backlog value $37,262,000  Submitted or in review | Duplicate rate 10.3%  Requests that repeat existing work
+20:05:16 PASS Join existing previews the match, needs description

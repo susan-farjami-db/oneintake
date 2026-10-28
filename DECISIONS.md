@@ -33,9 +33,14 @@
 - **Review:** Revisit the threshold with real text.
 
 ## D7. Genie over the gold table and the metric view
-- **Decision:** A script creates the space, with instructions that define backlog, waiting, in review, and the exact status codes, plus 10 sample questions. Each answer is checked against SQL (10/10) (A45–A47).
-- **Why:** Bundles have no Genie resource, and governed measures keep Genie's numbers equal to the app's KPIs.
+- **Decision:** A script creates the space, with instructions that define backlog, waiting, in review, and the exact status codes, plus 10 sample questions. Each answer is checked against SQL (10/10) (A45–A47). The Portfolio tab embeds chat through an OBO FastAPI proxy rather than opening the workspace Genie UI. The app requests the `genie` user scope (A57).
+- **Why:** Bundles have no Genie resource, and governed measures keep Genie's numbers equal to the app's KPIs. Staying in the app keeps row-filter identity next to the KPIs. AppKit `GenieChat` is not used because this stack is APX.
 
 ## D8. Delivery: one bundle, two jobs, one app
 - **Decision:** The bundle holds the Lakebase project, pipeline, app (env and resources in the bundle), a data-setup job, and an evaluation job, all serverless (A48–A52).
 - **Review:** Submit is idempotent and the UI retries gateway errors because of an intermittent cold-start 502 at the app proxy whose cause was not found (A50).
+
+## D9. Join existing shows a preview, and still needs a minimal description
+- **Decision:** Clicking "Join existing" (from the similar-projects panel or the duplicate-choice card) no longer submits directly. It opens a preview sheet fetched from `GET /matches/{key}`, showing the candidate's own description, owner, status, business unit, value, and category, with an inline box for the requester's own short description. "Confirm join" stays disabled until that box has text (A58).
+- **Why:** The backend's "join bypasses every required field" shortcut (A35) was too broad: `description` is NOT NULL on the table, so a bare join 500'd. The preview both fixes that (the requester supplies the missing field inline) and answers the original ask — see what you're joining before you join it.
+- **Review:** The preview reuses `DuplicateMatch`'s key; it looks the row up in both the Lakebase table and the synced copy, so it works whether the match is a live request or a tracked project.
