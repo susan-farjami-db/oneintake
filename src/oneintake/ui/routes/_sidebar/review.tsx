@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useReviewQueue, useReviewRequest, type ReviewItemOut } from "@/lib/api";
+import { errorMessage } from "@/lib/errors";
 import { usd } from "./mine";
 
 export const Route = createFileRoute("/_sidebar/review")({ component: ReviewQueue });
@@ -32,12 +33,18 @@ function ReviewCard({ r }: { r: ReviewItemOut }) {
   const [target, setTarget] = useState(r.top_match?.key ?? r.duplicate_of ?? "");
   const [reason, setReason] = useState("");
   const [done, setDone] = useState<string | null>(null);
+  const [error, setError] = useState("");
   const m = r.top_match;
-  const act = (action: "approve" | "merge" | "reject") =>
+  const act = (action: "approve" | "merge" | "reject") => {
+    setError("");
     review.mutate(
       { params: { request_id: r.request_id }, data: { action, merged_into: action === "merge" ? target : null, reason: reason || null } },
-      { onSuccess: (res) => setDone(res.data.status) },
+      {
+        onSuccess: (res) => setDone(res.data.status),
+        onError: (e) => setError(errorMessage(e, `Could not ${action} this request. Please try again.`)),
+      },
     );
+  };
   return (
     <Card data-testid="review-item" data-title={r.title}>
       <CardHeader className="pb-2">
@@ -72,6 +79,7 @@ function ReviewCard({ r }: { r: ReviewItemOut }) {
             <Button size="sm" variant="destructive" onClick={() => act("reject")} disabled={review.isPending}>Reject</Button>
           </div>
         )}
+        {error && <p className="text-sm text-red-600" role="alert">{error}</p>}
       </CardContent>
     </Card>
   );
