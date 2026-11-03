@@ -10,6 +10,7 @@ import {
   checkDuplicates, useCreateRequest, useCurrentUser, useFormConfig,
   type DuplicateMatch, type RequestOut,
 } from "@/lib/api";
+import { errorMessage } from "@/lib/errors";
 
 export const Route = createFileRoute("/_sidebar/submit")({ component: SubmitPage });
 
@@ -88,7 +89,7 @@ function SubmitPage() {
       submission_id: submissionId };
     create.mutate({ params: {}, data }, {
       onSuccess: (r) => { setResult(r.data); setNeedsChoice(false); },
-      onError: (e) => setError(JSON.stringify(e.body ?? e.message)),
+      onError: (e) => setError(errorMessage(e, "Could not submit your request. Please try again.")),
     });
   }
 
