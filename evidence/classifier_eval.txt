@@ -1,21 +1,23 @@
-# generated 2026-10-26T21:47:25+00:00
+# generated 2026-11-16T03:14:26+00:00
 rows=50 model=ai_classify version=2.1 (instructions + label descriptions from config)
-accuracy=0.940
-macro_f1=0.931
-mean_confidence=0.812
+accuracy=0.920
+macro_f1=0.911
+mean_confidence=0.795
 ## per label: precision recall f1 support
 Generative AI Assistant: 0.89 1.00 0.94 8
 Predictive Analytics: 0.88 1.00 0.93 7
-Process Automation: 1.00 1.00 1.00 11
+Process Automation: 1.00 0.91 0.95 11
 Data Integration: 1.00 0.83 0.91 6
 Reporting and BI: 0.88 1.00 0.93 7
 Document Intelligence: 1.00 0.83 0.91 6
-Risk and Compliance Analytics: 1.00 0.80 0.89 5
+Risk and Compliance Analytics: 0.80 0.80 0.80 5
 ## confusion (true -> predicted, misses only)
 Document Intelligence -> Generative AI Assistant: 1
 Risk and Compliance Analytics -> Predictive Analytics: 1
+Process Automation -> Risk and Compliance Analytics: 1
 Data Integration -> Reporting and BI: 1
 ## misclassified examples
 'Chat assistant that reads rate confirmations into the TMS': true=Document Intelligence predicted=Generative AI Assistant
 'Safety dashboard with crash risk predictions': true=Risk and Compliance Analytics predicted=Predictive Analytics
+'Automated invoice matching with anomaly scores': true=Process Automation predicted=Risk and Compliance Analytics
 'Unified agent performance data hub and report': true=Data Integration predicted=Reporting and BI

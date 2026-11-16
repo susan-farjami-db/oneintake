@@ -28,7 +28,7 @@ Each entry: decision, then reason.
 - **A19.** The "Agent ETA assistant" description was tightened so the demo pair clears the 0.85 band.
 - **A20.** `ai_classify` and `ai_extract` use version 2.1, which returns confidence. The options map must be a literal, so the instructions are a pipeline configuration value. A test keeps them equal to the app config.
 - **A21.** Gold clusters use `cluster_threshold` 0.92 plus merge links: template-alike rows gave 18 false links at 0.85, none at 0.92. The 0.85 threshold applies only to the live check.
-- **A22.** The metric view is created by `governance/uc_setup.sql`: pipelines and bundles have no metric view resource.
+- **A22.** `governance/metric_view.sql` creates the metric view (no pipeline or bundle resource).
 
 ## Governance
 - **A23.** `task_force` is a workspace-local group, since no account group exists. The row filter accepts `is_account_group_member` or `is_member`.
@@ -73,3 +73,5 @@ Each entry: decision, then reason.
 - **A56.** File count by the A2 rule: 33 authored files (adds the embedded Genie proxy/chat and the match-detail endpoint/preview, A58). Lockfiles, vendored shadcn components, and generated eval CSVs are excluded.
 - **A57.** Portfolio Genie is embedded via an OBO FastAPI proxy. `user_api_scopes` is `sql` plus `genie` (not the deprecated `dashboards.genie`; the API rejects tokens missing `genie`). SQL, status, identity, and an AI disclaimer sit on the same page.
 - **A58.** Fixed: Join existing skipped every required field, 500ing on the `description` NOT NULL column. It still needs title/description; other fields stay skipped. `GET /matches/{key}` backs a preview sheet (description, owner, value, category) with an inline description box.
+
+- **A59–A61:** in D10, `DECISIONS.md`.

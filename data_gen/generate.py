@@ -12,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from names import (BENEFITS, BUSINESS_UNITS, EMAIL_DOMAIN, FIRST_NAMES, LAST_NAMES,  # noqa: E402
                    PAINS, PATTERNS, SUBJECTS, SYSTEMS)
 from seeds import AMBIGUOUS, PLANTED_PAIRS  # noqa: E402
+from shape import shape, summary as shape_summary  # noqa: E402
 
 SEED = 20261026
 LIVE_DEMO_TITLE = "Chatbot so agents can check load ETA"
@@ -128,6 +129,7 @@ def main(out_root=ROOT):
         cat, subj = combos.pop()
         row = add_request(*concept(cat, subj), rng.choice(statuses))
         combo_rows.append((row, cat, subj[0]))
+    shape(requests, projects, planted, TODAY)
 
     raw = out_root / "data/raw"
     raw.mkdir(parents=True, exist_ok=True)
@@ -174,7 +176,8 @@ def main(out_root=ROOT):
 
     summary = (f"seed={SEED}\nrequests={len(requests)}\nprojects={len(projects)}\n"
                f"planted_pairs={len(planted)}\nambiguous={len(ambiguous_ids)}\n"
-               f"labeled_categories={len(label_rows)}\nduplicate_pairs={len(pairs)}\n")
+               f"labeled_categories={len(label_rows)}\nduplicate_pairs={len(pairs)}\n"
+               + "\n".join(shape_summary(requests)) + "\n")
     (out_root / "evidence").mkdir(exist_ok=True)
     (out_root / "evidence/data_gen.txt").write_text(summary)
     print(summary)

@@ -5,3 +5,28 @@ planted_pairs=18
 ambiguous=10
 labeled_categories=50
 duplicate_pairs=40
+## requests by submission month (peak = Apr-Jun, Sep-Nov)
+month_01=17
+month_02=13
+month_03=19
+month_04=26
+month_05=42
+month_06=29
+month_07=20
+month_08=14
+month_09=24
+month_10=38
+month_11=41
+month_12=17
+peak_season_share=0.67
+## business unit: requests, total est value USD, high urgency share
+Agent Operations: requests=49 value=15124000 high_urgency=0.24
+Brokerage: requests=48 value=11262000 high_urgency=0.19
+Capacity and Carrier Relations: requests=47 value=12601000 high_urgency=0.43
+Technology: requests=32 value=5796000 high_urgency=0.12
+Safety and Compliance: requests=30 value=5674000 high_urgency=0.37
+Finance: requests=28 value=6818000 high_urgency=0.14
+Claims and Insurance: requests=23 value=3798000 high_urgency=0.39
+Customer Solutions: requests=16 value=4361000 high_urgency=0.12
+Human Resources: requests=14 value=1843000 high_urgency=0.07
+Marketing: requests=13 value=1201000 high_urgency=0.15

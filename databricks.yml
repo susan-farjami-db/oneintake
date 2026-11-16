@@ -142,7 +142,7 @@ resources:
               - "INTAKE_CATALOG=${var.catalog}"
               - "DATABRICKS_SQL_WAREHOUSE_ID=${var.warehouse_id}"
               - "uc-sql"
-              - "governance/uc_setup.sql"
+              - "governance/metric_view.sql"
               - "metric_view"
         - task_key: sync_projects
           depends_on: [{ task_key: refresh_pipeline }]

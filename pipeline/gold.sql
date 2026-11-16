@@ -1,5 +1,5 @@
 -- Gold: one row per request or tracked project with portfolio fields, embedding, and duplicate cluster.
--- The metric view gold.portfolio_metrics is created over this table by governance/uc_setup.sql
+-- The metric view gold.portfolio_metrics is created over this table by governance/metric_view.sql
 -- (section metric_view) because pipelines cannot define metric views.
 
 CREATE TEMPORARY VIEW portfolio_base AS

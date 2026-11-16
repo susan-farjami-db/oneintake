@@ -2,6 +2,19 @@
 
 An intake app where business units at the carrier propose AI, data, and analytics projects. While the requester types, the app flags likely duplicates of existing work. Each new request is classified on submit, and the Task Force reviews, approves, or merges requests. The portfolio is queryable in Genie. All data is synthetic.
 
+## Business case
+
+The synthetic log is the baseline: an asset-light carrier whose ideas come from an agent network and capacity teams, triaged by hand. `data_gen/shape.py` gives it freight seasonality (produce season and Q4 peak) and business-unit skew, and the metric view reports what the CFO, who funds the AI portfolio, is measured on.
+
+| KPI (metric view measure) | Baseline (shaped log) | Target | Supported by |
+|---|---|---|---|
+| Time to catch a duplicate | 34 days (found at review) | < 5 s (while typing) | deployed demo: flagged 3.6 s after typing |
+| Duplicated value reaching funding (`duplicate_value_usd`) | $6.4M (10% of requests) | < $1.3M (−80%) | 0.70 band surfaces 17/18 planted pairs |
+| Median submit-to-decision (`median_cycle_days`) | 34 days (36 in peak season) | ≤ 10 days | pre-categorized, one-click review |
+| Backlog value (`open_value_usd`) | $39.7M | −50% | faster decisions, merges at intake |
+
+Targets are projections (A61). Capacity, agent operations, and brokerage file 48% of requests and 57% of their value.
+
 ## Architecture
 
 ```mermaid
@@ -44,7 +57,8 @@ flowchart LR
 | `config/` | Form fields, categories, thresholds (packaged into the app) |
 | `data_gen/` | Seeded synthetic data; names come from `names.py` |
 | `pipeline/` | SDP SQL: bronze, silver (expectations, `ai_extract`, `ai_classify`), gold (embeddings, clusters) |
-| `governance/uc_setup.sql` | Schemas, comments, tags, row filter, metric view |
+| `governance/uc_setup.sql` | Schemas, comments, tags, row filter |
+| `governance/metric_view.sql` | `gold.portfolio_metrics` metric view (CFO KPIs and the peak-season dimension) |
 | `lakebase/setup.sql` | Postgres schema, pgvector, app grants |
 | `src/oneintake/` | APX app: `backend/` (FastAPI, sqlmodel) and `ui/` (React, shadcn, orval) |
 | `ml/` | Classifier evaluation and duplicate-threshold tuning (MLflow) |
