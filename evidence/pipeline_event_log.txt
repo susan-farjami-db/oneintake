@@ -1,16 +1,16 @@
-# generated 2026-10-27T00:10:20+00:00
+# generated 2026-11-16T03:08:26+00:00
 pipeline_id=00000000-0000-0000-0000-000000000000
 ## expectations (latest update)
-{"dataset": "oneintake_demo.silver.requests", "name": "business_unit_allowed", "passed": "305", "failed": "1"}
-{"dataset": "oneintake_demo.silver.requests", "name": "description_not_null", "passed": "305", "failed": "1"}
-{"dataset": "oneintake_demo.silver.requests", "name": "est_value_non_negative", "passed": "305", "failed": "1"}
-{"dataset": "oneintake_demo.silver.requests", "name": "title_not_null", "passed": "305", "failed": "1"}
+{"dataset": "oneintake_demo.silver.requests", "name": "business_unit_allowed", "passed": "303", "failed": "1"}
+{"dataset": "oneintake_demo.silver.requests", "name": "description_not_null", "passed": "303", "failed": "1"}
+{"dataset": "oneintake_demo.silver.requests", "name": "est_value_non_negative", "passed": "303", "failed": "1"}
+{"dataset": "oneintake_demo.silver.requests", "name": "title_not_null", "passed": "303", "failed": "1"}
 ## row counts
-{"t": "silver.requests", "n": "302"}
-{"t": "gold.projects", "n": "362"}
+{"t": "silver.requests", "n": "300"}
+{"t": "gold.projects", "n": "360"}
 {"t": "raw.bronze_opportunity_log", "n": "304"}
 {"t": "raw.bronze_projects", "n": "60"}
-{"t": "raw.bronze_intake_app", "n": "2"}
+{"t": "raw.bronze_intake_app", "n": "0"}
 {"t": "silver.requests_quarantine", "n": "4"}
 ## self-check
 bronze_rows_split_into_silver_or_quarantine: PASS

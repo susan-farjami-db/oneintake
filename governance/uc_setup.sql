@@ -100,35 +100,3 @@ RETURN is_account_group_member('task_force') OR is_member('task_force')
              WHERE lower(u.user_email) = lower(current_user()) AND u.business_unit = bu);
 ALTER MATERIALIZED VIEW ${catalog}.silver.requests SET ROW FILTER ${catalog}.ops.business_unit_filter ON (business_unit);
 ALTER MATERIALIZED VIEW ${catalog}.gold.projects SET ROW FILTER ${catalog}.ops.business_unit_filter ON (business_unit);
-
--- @section metric_view
-CREATE OR REPLACE VIEW ${catalog}.gold.portfolio_metrics
-WITH METRICS LANGUAGE YAML
-COMMENT 'Intake request KPIs for the AI Task Force portfolio (requests only, row filter inherited from gold.projects)'
-AS $$
-version: 1.1
-source: ${catalog}.gold.projects
-filter: source = 'request'
-dimensions:
-  - name: category
-    expr: category
-  - name: business_unit
-    expr: business_unit
-  - name: status
-    expr: status
-  - name: month
-    expr: submitted_month
-    comment: First day of the submission month
-measures:
-  - name: request_count
-    expr: COUNT(1)
-  - name: total_est_value
-    expr: SUM(est_value_usd)
-    comment: Sum of estimated annual value in USD
-  - name: avg_cycle_days
-    expr: AVG(cycle_days)
-    comment: Average days from submission to decision (decided requests only)
-  - name: duplicate_rate
-    expr: AVG(CASE WHEN is_duplicate THEN 1.0 ELSE 0.0 END)
-    comment: Share of requests that duplicate an earlier request or project
-$$;

@@ -24,7 +24,7 @@
 - **Review:** `task_force` is a workspace-local group (A23). Move to an account group, and confirm which business units non-members may see.
 
 ## D5. Governance as code, applied after each pipeline run
-- **Decision:** `governance/uc_setup.sql` applies a glossary of comments, tags under the existing tag policies, a business-unit row filter, and the metric view. The setup job reruns it after every pipeline refresh (A25–A29).
+- **Decision:** `governance/uc_setup.sql` applies a glossary of comments, tags under the existing tag policies, and a business-unit row filter; `governance/metric_view.sql` adds the metric view. The setup job reruns it after every pipeline refresh (A25–A29).
 - **Why:** Pipelines don't declare row filters and tags on all objects. One script keeps it repeatable, and a check proves both the member and non-member paths.
 
 ## D6. Duplicate clusters in gold use a stricter rule than the live check
@@ -44,3 +44,12 @@
 - **Decision:** Clicking "Join existing" (from the similar-projects panel or the duplicate-choice card) no longer submits directly. It opens a preview sheet fetched from `GET /matches/{key}`, showing the candidate's own description, owner, status, business unit, value, and category, with an inline box for the requester's own short description. "Confirm join" stays disabled until that box has text (A58).
 - **Why:** The backend's "join bypasses every required field" shortcut (A35) was too broad: `description` is NOT NULL on the table, so a bare join 500'd. The preview both fixes that (the requester supplies the missing field inline) and answers the original ask — see what you're joining before you join it.
 - **Review:** The preview reuses `DuplicateMatch`'s key; it looks the row up in both the Lakebase table and the synced copy, so it works whether the match is a live request or a tracked project.
+
+## D10. The data tells the business story, and the KPIs are owned by the CFO
+- **Decision:** `data_gen/shape.py` shapes the synthetic log the way an asset-light, agent-based carrier sees it: requests spike in produce season and the Q4 peak, the units closest to loads and capacity file the most (and the highest-value) requests, safety and claims skew urgent, and each planted duplicate comes from a different business unit than the work it repeats. `gold.portfolio_metrics` adds the CFO's measures (`duplicate_value_usd`, `open_value_usd`, `median_cycle_days`, `high_urgency_share`) and a `season` dimension, and two Genie check questions ask them (A59–A61).
+- **Why:** Generic counts showed that the app works, not why it matters. The shaped log is the baseline (manual triage today), and every outcome is stated as baseline → target on a governed measure: duplicated value reaching funding, median submit-to-decision, peak-season decision time, backlog value.
+- **Review:** The shaping runs after generation with its own seed, so ids, titles, statuses, planted pairs, and both eval sets are byte-identical to before; the duplicate and classifier evaluations still apply.
+- **Assumptions:**
+  - **A59.** Seasonality and skew are illustrative, not fitted to a real log: month weights favor Apr–Jun and Sep–Nov (peak share 0.67); manual decision time is gamma-distributed (median 34 days) and 1.5× slower in peak months; business-unit share, value multipliers, and urgency weights are in `BU_PROFILE`. Re-fit them to the real opportunity log before quoting baselines to a customer.
+  - **A60.** The metric view moved to `governance/metric_view.sql` so `uc_setup.sql` stays under the 9,000-character file limit. The job's `metric_view` task points at the new file.
+  - **A61.** Two Genie check questions changed (approved-value total → duplicated value by business unit; September count → median cycle time by season), keeping 10 questions and the ≥ 9 bar. The rerun matched 10/10. Targets in the business case (e.g., −80% duplicated value, ≤ 10-day median decision) are projections from the measured detection and classifier results, to be validated over two quarters.

@@ -99,3 +99,30 @@ def test_bundle_config_matches_app_config():
     bundle = (ROOT / "databricks.yml").read_text()
     assert f'default: "{cfg["classify_instructions"]}"' in bundle
     assert f'default: "{cfg["thresholds"]["likely_duplicate"]}"' in bundle
+
+
+def test_freight_seasonality_and_skew(out):
+    from datetime import datetime
+    from shape import BU_PROFILE, PEAK_MONTHS
+    rows = read_csv(out / "data/raw/opportunity_log.csv")
+    peak = [r for r in rows if datetime.fromisoformat(r["submitted_at"]).month in PEAK_MONTHS]
+    assert len(peak) / len(rows) > 0.6  # 6 of 12 months, so 0.5 would mean no seasonality
+    counts = {b: sum(r["business_unit"] == b for r in rows) for b in BU_PROFILE}
+    assert counts["Agent Operations"] > 3 * counts["Marketing"]
+
+    def cycle(r):
+        return (datetime.fromisoformat(r["updated_at"]) - datetime.fromisoformat(r["submitted_at"])).days
+    decided = [r for r in rows if r["status"] in ("approved", "rejected", "merged")]
+    pk = sorted(cycle(r) for r in decided if datetime.fromisoformat(r["submitted_at"]).month in PEAK_MONTHS)
+    off = sorted(cycle(r) for r in decided if datetime.fromisoformat(r["submitted_at"]).month not in PEAK_MONTHS)
+    assert pk[len(pk) // 2] > off[len(off) // 2]  # manual decisions slow down in peak season
+
+
+def test_planted_duplicates_cross_business_units(out):
+    reqs = {r["title"]: r for r in read_csv(out / "data/raw/opportunity_log.csv")}
+    projs = {p["name"]: p for p in json.loads((out / "data/raw/project_tracker.json").read_text())}
+    for _c, kind, existing, _d, new, _nd in PLANTED_PAIRS:
+        if new == generate.LIVE_DEMO_TITLE:
+            continue
+        old = (projs if kind == "project" else reqs)[existing]
+        assert reqs[new]["business_unit"] != old["business_unit"], new

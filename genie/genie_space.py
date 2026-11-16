@@ -23,7 +23,8 @@ INSTRUCTIONS = f"""This space answers questions about the AI Task Force portfoli
 - {P} has one row per intake request (source = 'request') and per tracked project (source = 'project').
   Unless the user asks about projects, answer about requests only (source = 'request').
 - {M} is a metric view over requests with measures request_count, total_est_value, avg_cycle_days,
-  duplicate_rate and dimensions category, business_unit, status, month. Query measures with MEASURE().
+  median_cycle_days, duplicate_rate, duplicate_value_usd, open_value_usd, high_urgency_share and dimensions
+  category, business_unit, status, month, season. Query measures with MEASURE().
 - Backlog means open requests: status 'submitted' or 'in_review' (is_open = true). Backlog value is the sum
   of est_value_usd for open requests.
 - "Waiting" means open requests; days waiting = datediff(current_date(), submitted_at).
@@ -31,6 +32,7 @@ INSTRUCTIONS = f"""This space answers questions about the AI Task Force portfoli
   requests use submitted, in_review, approved, merged, rejected; projects use planned, in_progress,
   on_hold, completed. Always filter status with = on these codes, never LIKE.
 - Duplicate rate is the share of requests where is_duplicate is true; use MEASURE(duplicate_rate).
+  Duplicated value (double funding) is MEASURE(duplicate_value_usd). Peak season: season dimension.
 - Values are estimated annual value in US dollars. Round money to whole dollars and rates to 3 decimals.
 - Month means the submitted_month column (first day of the month)."""
 
@@ -50,14 +52,14 @@ QUESTIONS = [
      f"SELECT category, MEASURE(request_count) FROM {M} GROUP BY ALL"),
     ("What is the average cycle time in days by business unit?",
      f"SELECT business_unit, MEASURE(avg_cycle_days) FROM {M} GROUP BY ALL"),
-    ("What is the total estimated value of approved requests?",
-     f"SELECT MEASURE(total_est_value) FROM {M} WHERE status = 'approved'"),
+    ("What is the duplicated value by business unit?",
+     f"SELECT business_unit, MEASURE(duplicate_value_usd) FROM {M} GROUP BY ALL"),
     ("How many tracked projects are in progress?",
      f"SELECT count(*) FROM {P} WHERE source = 'project' AND status = 'in_progress'"),
     ("Which business unit submitted the most requests?",
      f"SELECT business_unit, count(*) AS n FROM {P} WHERE source = 'request' GROUP BY 1 ORDER BY n DESC LIMIT 1"),
-    ("How many requests were submitted in September 2026?",
-     f"SELECT count(*) FROM {P} WHERE source = 'request' AND submitted_month = DATE'2026-09-01'"),
+    ("What is the median cycle time in days in peak season versus off-peak?",
+     f"SELECT season, MEASURE(median_cycle_days) FROM {M} GROUP BY ALL"),
 ]
 
 
